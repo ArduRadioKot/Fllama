@@ -2,7 +2,7 @@
 # Fllama
 
 **Fllama** is a cross-platform desktop chat client built with Electron for working with Ollama.
-
+![image](images/landing.png)
 ## Features
 
 - Modern Electron-based interface

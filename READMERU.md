@@ -2,6 +2,7 @@
 # Fllama
 
 **Fllama** — это кроссплатформенный десктопный чат-клиент на Electron для работы с Ollama.
+![image](images/landing.png)
 
 ## Возможности
 
