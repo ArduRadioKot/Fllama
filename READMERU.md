@@ -24,7 +24,7 @@
 
 ## Скриншоты
 ![image](images/screen1.png)
-![image](images/screent2.png)
+![image](images/screen2.png)
 
 ## Требования
 
