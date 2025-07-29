@@ -22,6 +22,10 @@
 - **JavaScript** — логика приложения, взаимодействие с Electron и Ollama API.
 - **Ollama API** — взаимодействие с локальным сервером Ollama для работы с языковыми моделями.
 
+## Скриншоты
+![image](images/screen1.png)
+![image](images/screent2.png)
+
 ## Требования
 
 Для работы Fllama требуется установленный Ollama.
@@ -85,7 +89,7 @@ ollama --version
 ├── dist/           # Сборки для разных платформ
 ├── package.json    # Конфигурация проекта и сборки
 └── .gitignore
-```
+``` 
 
 ## Лицензия
 

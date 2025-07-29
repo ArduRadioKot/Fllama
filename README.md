@@ -22,6 +22,10 @@
 - **JavaScript** — application logic, interaction with Electron and Ollama API.
 - **Ollama API** — integration with the local Ollama server for working with language models.
 
+## Screenshots
+![image](images/screen1.png)
+![image](images/screent2.png)
+
 ## Requirements
 
 Fllama requires Ollama to be installed on your system.
