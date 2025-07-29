@@ -1,3 +1,4 @@
+[README_EN](README) | [README_RU](READMERU)
 # Fllama
 
 **Fllama** — это кроссплатформенный десктопный чат-клиент на Electron для работы с Ollama.
