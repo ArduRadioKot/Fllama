@@ -13,13 +13,13 @@
     <div class="navbar">
       <a class="logo" href="#"><img src="icon/icon.png" alt="Fllama"/> Fllama</a>
       <nav class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#faq">FAQ</a>
-        <a href="#download">Download</a>
+        <a href="#features" data-i18n="features">Features</a>
+        <a href="#faq" data-i18n="faq">FAQ</a>
+        <a href="#download" data-i18n="download">Download</a>
       </nav>
       <div class="header-actions">
-        <a class="btn btn-primary" href="#download">Download</a>
-        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+        <a class="btn btn-primary" href="#download" data-i18n="download">Download</a>
+        <button class="language-toggle" id="languageToggle" title="Toggle language">EN</button>
       </div>
     </div>
   </header>
@@ -29,10 +29,10 @@
       <div class="background-grid"></div>
       <div class="hero-content hero-centered">
         <img class="hero-icon no-bg" src="icon/icon.png" alt="Fllama" />
-        <h1><span>Your local</span> <span class="gradient-text">AI toolkit.</span></h1>
-        <p class="hero-sub">Run Llama, DeepSeek, Qwen, Gemma locally on your computer.</p>
+        <h1><span data-i18n="hero.title1">Your local</span> <span class="gradient-text" data-i18n="hero.title2">AI toolkit.</span></h1>
+        <p class="hero-sub" data-i18n="hero.subtitle">Run Llama, DeepSeek, Qwen, Gemma locally on your computer.</p>
         <a class="btn btn-gradient hero-download" href="#download">
-          <span>⬇️ Download Fllama</span>
+          <span data-i18n="hero.download">⬇️ Download Fllama</span>
         </a>
         <div class="hero-macstudio-glow">
           <img src="images/screen1.png" alt="Fllama on Mac Studio" />
@@ -43,30 +43,30 @@
       <div class="background-grid"></div>
       <div class="spotlight-content">
         <div class="spotlight-text">
-          <h2 class="spotlight-title">Next-Gen Local AI Client</h2>
-          <p class="spotlight-desc">
+          <h2 class="spotlight-title" data-i18n="spotlight.title">Local AI Client</h2>
+          <p class="spotlight-desc" data-i18n="spotlight.desc">
             Fllama combines the power of local LLMs with a beautiful, intuitive interface. Enjoy privacy, speed, and full control.
           </p>
           <ul class="spotlight-list">
             <li>
               <span class="spotlight-icon">✔️</span>
               <span>
-                <b>Multiple Model Support</b><br>
-                Run Llama, Mistral, Gemma, Qwen and more — all locally.
+                <b data-i18n="spotlight.feature1.title">Multiple Model Support</b><br>
+                <span data-i18n="spotlight.feature1.desc">Run Llama, Mistral, Gemma, Qwen and more — all locally.</span>
               </span>
             </li>
             <li>
               <span class="spotlight-icon">✔️</span>
               <span>
-                <b>Blazing Fast</b><br>
-                Instant startup, lightweight, no bloat. Optimized for speed.
+                <b data-i18n="spotlight.feature2.title">Blazing Fast</b><br>
+                <span data-i18n="spotlight.feature2.desc">Instant startup, lightweight, no bloat. Optimized for speed.</span>
               </span>
             </li>
             <li>
               <span class="spotlight-icon">✔️</span>
               <span>
-                <b>Full Privacy</b><br>
-                All data stays on your device. No cloud, no tracking, ever.
+                <b data-i18n="spotlight.feature3.title">Full Privacy</b><br>
+                <span data-i18n="spotlight.feature3.desc">All data stays on your device. No cloud, no tracking, ever.</span>
               </span>
             </li>
           </ul>
@@ -78,123 +78,123 @@
     </section>
     <section class="highlights" id="highlights">
       <div class="highlights-grid">
-        <div class="highlight-item"><span class="highlight-icon">🌟</span><span>Open Source</span></div>
-        <div class="highlight-item"><span class="highlight-icon">🚀</span><span>Fast Updates</span></div>
-        <div class="highlight-item"><span class="highlight-icon">🖥️</span><span>Native Desktop</span></div>
+        <div class="highlight-item"><span class="highlight-icon">🌟</span><span data-i18n="highlights.1">Open Source</span></div>
+        <div class="highlight-item"><span class="highlight-icon">🚀</span><span data-i18n="highlights.2">Fast Updates</span></div>
+        <div class="highlight-item"><span class="highlight-icon">🖥️</span><span data-i18n="highlights.3">Native Desktop</span></div>
       </div>
     </section>
     <section class="features" id="features">
-      <h2 class="section-title">Features</h2>
+      <h2 class="section-title" data-i18n="features.title">Features</h2>
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">💻</div>
-          <h3>Cross-platform</h3>
-          <p>Works on Windows, macOS (Intel & Apple Silicon), and Linux.</p>
+          <h3 data-i18n="features.1.title">Cross-platform</h3>
+          <p data-i18n="features.1.desc">Works on Windows, macOS (Intel & Apple Silicon), and Linux.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">⚡</div>
-          <h3>Fast & Lightweight</h3>
-          <p>Instant startup, minimal resource usage, no bloat.</p>
+          <h3 data-i18n="features.2.title">Fast & Lightweight</h3>
+          <p data-i18n="features.2.desc">Instant startup, minimal resource usage, no bloat.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🤖</div>
-          <h3>Ollama Integration</h3>
-          <p>Chat with any Ollama model locally, including Llama 3, Mistral, Gemma, Qwen, and more.</p>
+          <h3 data-i18n="features.3.title">Ollama Integration</h3>
+          <p data-i18n="features.3.desc">Chat with any Ollama model locally, including Llama 3, Mistral, Gemma, Qwen, and more.</p>
         </div>
       </div>
     </section>
     <section class="screenshot" id="screenshot">
       <div class="screenshot-frame">
-        <img src="images/screen1.png" alt="Fllama App Screenshot" />
+        <img src="images/screen2.png" alt="Fllama App Screenshot" />
       </div>
     </section>
     <section class="faq" id="faq">
-      <h2 class="section-title">Frequently Asked Questions</h2>
+      <h2 class="section-title" data-i18n="faq.title">Frequently Asked Questions</h2>
       <div class="faq-list">
         <div class="faq-item">
-          <button class="faq-question">Does Fllama collect any data?</button>
-          <div class="faq-answer">No. All your data stays local on your machine. Fllama does not collect or send any data anywhere.</div>
+          <button class="faq-question" data-i18n="faq.1.question">Does Fllama collect any data?</button>
+          <div class="faq-answer" data-i18n="faq.1.answer">No. All your data stays local on your machine. Fllama does not collect or send any data anywhere.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-question">Can I use Fllama at my company or organization?</button>
-          <div class="faq-answer">Yes! Fllama is free for internal business and personal use. See the license for details.</div>
+          <button class="faq-question" data-i18n="faq.2.question">Can I use Fllama at my company or organization?</button>
+          <div class="faq-answer" data-i18n="faq.2.answer">Yes! Fllama is free for internal business and personal use. See the license for details.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-question">What are the minimum requirements?</button>
-          <div class="faq-answer">Ollama requires. Fllama runs on Windows, macOS (Intel/Apple Silicon), and Linux.</div>
+          <button class="faq-question" data-i18n="faq.3.question">What are the minimum requirements?</button>
+          <div class="faq-answer" data-i18n="faq.3.answer">Ollama requires. Fllama runs on Windows, macOS (Intel/Apple Silicon), and Linux.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-question">What models can I run?</button>
-          <div class="faq-answer">Any model supported by Ollama, including Llama, Mistral, Gemma, Qwen, and more. See the <a href="https://ollama.com/library" target="_blank">Ollama Model Library</a>.</div>
+          <button class="faq-question" data-i18n="faq.4.question">What models can I run?</button>
+          <div class="faq-answer" data-i18n="faq.4.answer">Any model supported by Ollama, including Llama, Mistral, Gemma, Qwen, and more. See the <a href="https://ollama.com/library" target="_blank">Ollama Model Library</a>.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-question">Is Fllama open source?</button>
-          <div class="faq-answer">Yes! The code is available on <a href="https://github.com/arduradiokot/fllama" target="_blank">GitHub</a> under the GPL v2.0 license.</div>
+          <button class="faq-question" data-i18n="faq.5.question">Is Fllama open source?</button>
+          <div class="faq-answer" data-i18n="faq.5.answer">Yes! The code is available on <a href="https://github.com/arduradiokot/fllama" target="_blank">GitHub</a> under the GPL v2.0 license.</div>
         </div>
       </div>
     </section>
     <section class="download-section" id="download">
-      <h2 class="section-title">Скачать Fllama</h2>
-      <p style="text-align: center; font-size: 18px; max-width: 700px; margin: 0 auto 60px; opacity: 0.9;">
-        Выберите версию для вашей операционной системы и начните работать с локальными AI моделями уже сегодня.
+      <h2 class="section-title" data-i18n="download.title">Download Fllama</h2>
+      <p style="text-align: center; font-size: 18px; max-width: 700px; margin: 0 auto 60px; opacity: 0.9;" data-i18n="download.subtitle">
+        Choose the version for your operating system and start working with local AI models today.
       </p>
       <div class="download-grid">
         <div class="download-card">
           <div class="download-icon">
             <i class="fab fa-windows"></i>
           </div>
-          <h3>Windows</h3>
-          <p>Полная поддержка Windows 10 и 11. Простая установка и автоматические обновления.</p>
+          <h3 data-i18n="download.windows.title">Windows</h3>
+          <p data-i18n="download.windows.desc">Full support for Windows 10 and 11. Easy installation and automatic updates.</p>
           <div class="version-info">
-            <strong>Версия 1.0.0</strong> 
+            <strong data-i18n="download.version">Version 1.0.0</strong> 
           </div>
           <a href="https://github.com/arduradiokot/fllama/releases" target="_blank" class="btn btn-gradient">
-            <i class="fas fa-download"></i> Скачать для Windows
+            <i class="fas fa-download"></i> <span data-i18n="download.button">Download for Windows</span>
           </a>
         </div>
         <div class="download-card">
           <div class="download-icon">
             <i class="fab fa-apple"></i>
           </div>
-          <h3>macOS</h3>
-          <p>Нативная поддержка macOS 11+ с оптимизацией для Apple Silicon и Intel процессоров.</p>
+          <h3 data-i18n="download.macos.title">macOS</h3>
+          <p data-i18n="download.macos.desc">Native support for macOS 11+ with optimization for Apple Silicon and Intel processors.</p>
           <div class="version-info">
-            <strong>Версия 1.0.0</strong> 
+            <strong data-i18n="download.version">Version 1.0.0</strong> 
           </div>
           <a href="https://github.com/arduradiokot/fllama/releases" target="_blank" class="btn btn-gradient">
-            <i class="fas fa-download"></i> Скачать для macOS
+            <i class="fas fa-download"></i> <span data-i18n="download.button">Download for macOS</span>
           </a>
         </div>
         <div class="download-card">
           <div class="download-icon">
             <i class="fab fa-linux"></i>
           </div>
-          <h3>Linux</h3>
-          <p>Работает на всех основных дистрибутивах Linux. Простая установка через CLI.</p>
+          <h3 data-i18n="download.linux.title">Linux</h3>
+          <p data-i18n="download.linux.desc">Works on all major Linux distributions. Easy installation via CLI.</p>
           <div class="version-info">
-            <strong>Версия 1.0.0</strong> 
+            <strong data-i18n="download.version">Version 1.0.0</strong> 
           </div>
           <a href="https://github.com/arduradiokot/fllama/releases" target="_blank" class="btn btn-gradient">
-            <i class="fas fa-download"></i> Скачать для Linux
+            <i class="fas fa-download"></i> <span data-i18n="download.button">Download for Linux</span>
           </a>
         </div>
       </div>
     </section>
     <section class="get-started" id="download">
-      <h2 class="section-title">Get Started with Fllama</h2>
-      <a class="btn btn-gradient" href="#download" target="_blank">Download for your OS</a>
-      <p class="get-started-note">Fllama is free for home and work use &bull; <a href="LICENSE" target="_blank">terms</a></p>
+      <h2 class="section-title" data-i18n="getstarted.title">Get Started with Fllama</h2>
+      <a class="btn btn-gradient" href="#download" target="_blank" data-i18n="getstarted.button">Download for your OS</a>
+      <p class="get-started-note" data-i18n="getstarted.note">Fllama is free for home and work use &bull; <a href="LICENSE" target="_blank" data-i18n="getstarted.terms">terms</a></p>
     </section>
   </main>
   <footer>
     <div class="footer-content">
-      <div>© 2024 Fllama. Not affiliated with LM Studio or Ollama.</div>
+      <div data-i18n="footer.copyright">2025 Fllama</div>
       <div>
-        <a href="https://github.com/arduradiokot/fllama" target="_blank">GitHub</a> |
-        <a href="LICENSE" target="_blank">License: GPL v2.0</a>
+        <a href="https://github.com/arduradiokot/fllama" target="_blank" data-i18n="footer.github">GitHub</a> |
+        <a href="LICENSE" target="_blank" data-i18n="footer.license">License: GPL v2.0</a>
       </div>
     </div>
   </footer>
   <script src="main.js"></script>
 </body>
-</html> 
+</html>

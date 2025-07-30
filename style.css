@@ -25,6 +25,21 @@ body:not(.dark-mode) {
     color: var(--text-light);
 }
 
+.language-toggle {
+    background: rgba(34,168,189,0.2);
+    border: none;
+    color: var(--accent);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.language-toggle:hover {
+    background: rgba(34,168,189,0.3);
+}
+
 body::before {
   content: '';
   position: fixed;
@@ -642,17 +657,13 @@ section, .highlights {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #181e1f;
   border-radius: 24px;
-  box-shadow: 0 8px 40px #0005, 0 1.5px 8px #22A8BD22;
   padding: 24px 24px 16px 24px;
   border: 1.5px solid #2224;
 }
 .spotlight-image-frame img {
   width: 100%;
   border-radius: 12px;
-  box-shadow: 0 2px 12px #0002;
-  background: #23282a;
 }
 @media (max-width: 900px) {
   .spotlight-content {

@@ -45,3 +45,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 }); 
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация языка (по умолчанию английский)
+    let currentLanguage = localStorage.getItem('language') || 'en';
+    updateLanguage(currentLanguage);
+
+    // Обработчик переключения языка
+    document.getElementById('languageToggle').addEventListener('click', function() {
+        currentLanguage = currentLanguage === 'en' ? 'ru' : 'en';
+        localStorage.setItem('language', currentLanguage);
+        updateLanguage(currentLanguage);
+        this.textContent = currentLanguage === 'en' ? 'RU' : 'EN';
+    });
+
+    // Функция обновления языка
+    function updateLanguage(lang) {
+        fetch(`locales/${lang}.json`)
+            .then(response => response.json())
+            .then(translations => {
+                document.querySelectorAll('[data-i18n]').forEach(element => {
+                    const key = element.getAttribute('data-i18n');
+                    if (translations[key]) {
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            element.value = translations[key];
+                        } else {
+                            element.innerHTML = translations[key];
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading language file:', error));
+    }
+
+    // Инициализация кнопки языка
+    document.getElementById('languageToggle').textContent = currentLanguage === 'en' ? 'RU' : 'EN';
+
+    // FAQ аккордеон
+    document.querySelectorAll('.faq-question').forEach(question => {
+        question.addEventListener('click', () => {
+            const item = question.parentElement;
+            item.classList.toggle('open');
+        });
+    });
+});
