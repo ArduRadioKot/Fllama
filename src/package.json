@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node start-electron.js",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:mac-x64": "electron-builder --mac --x64",
@@ -22,9 +22,6 @@
   "license": "GPL-2.0",
   "description": "Desktop chat on Electron for Ollama",
   "homepage": "https://github.com/arduradiokot/fllama",
-  "dependencies": {
-    "axios": "^1.11.0"
-  },
   "devDependencies": {
     "electron": "^37.2.4",
     "electron-builder": "^24.13.3"
@@ -41,7 +38,17 @@
       "renderer.js",
       "index.html",
       "style.css",
-      "package.json"
+      "package.json",
+      "thoughts.js",
+      "settings-store.js",
+      "ollama-service.js",
+      "providers.js",
+      "agent-server.js",
+      "project-tools.js",
+      "agent-loop.js",
+      "opencode-service.js",
+      "markdown.js",
+      "start-electron.js"
     ],
     "mac": {
       "target": [

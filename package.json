@@ -1,0 +1,7 @@
+{
+  "name": "fllama",
+  "private": true,
+  "scripts": {
+    "start": "npm start --prefix src"
+  }
+}
