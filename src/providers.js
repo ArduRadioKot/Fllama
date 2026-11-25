@@ -1,6 +1,8 @@
 const http = require('http');
 const https = require('https');
+const { StringDecoder } = require('node:string_decoder');
 const { splitThoughts } = require('./thoughts');
+const { openAICompatible } = require('./provider-catalog');
 const { normalizeOllamaUrl } = require('./ollama-service');
 const { streamOpenCode, listOpenCodeModels } = require('./opencode-service');
 
@@ -205,6 +207,7 @@ async function readNDJSON(stream, onObject, signal) {
 }
 
 async function readSSE(stream, onEvent, signal) {
+  const decoder = new StringDecoder('utf8');
   let buf = '';
   const consume = (block) => {
     let event = 'message';
@@ -219,21 +222,20 @@ async function readSSE(stream, onEvent, signal) {
       onEvent({ event, done: true });
       return;
     }
-    try {
-      onEvent({ event, json: JSON.parse(data) });
-    } catch {
-      // ignore non-json keepalives
-    }
+    let json;
+    try { json = JSON.parse(data); } catch { return; }
+    onEvent({ event, json });
   };
   for await (const chunk of stream) {
     if (signal?.aborted) throw abortError();
-    buf += chunk.toString();
-    let idx;
-    while ((idx = buf.indexOf('\n\n')) !== -1) {
-      consume(buf.slice(0, idx));
-      buf = buf.slice(idx + 2);
+    buf += decoder.write(chunk);
+    let separator;
+    while ((separator = /\r?\n\r?\n/.exec(buf))) {
+      consume(buf.slice(0, separator.index));
+      buf = buf.slice(separator.index + separator[0].length);
     }
   }
+  buf += decoder.end();
   if (buf.trim()) consume(buf);
 }
 
@@ -356,6 +358,7 @@ async function streamChatCompletions({ url, apiKey, model, messages, tools, sign
   const res = await requestStream(url, { method: 'POST', headers, body, signal });
   await readSSE(res, ({ json, done }) => {
     if (done || !json) return;
+    if (json.error) throw new Error(json.error.message || 'The provider returned an error.');
     const choice = json.choices && json.choices[0];
     const delta = choice?.delta || {};
     if (typeof delta.reasoning_content === 'string') state.native += delta.reasoning_content;
@@ -390,9 +393,9 @@ async function streamResponses({ url, apiKey, model, messages, signal, onDelta, 
   }, signal);
 }
 
-async function streamOpenAI({ baseUrl, apiKey, model, messages, tools, signal, onDelta, allowResponsesFallback }) {
+async function streamOpenAI({ baseUrl, apiKey, model, messages, tools, signal, onDelta, allowResponsesFallback, exactBase = false }) {
   const state = { content: '', native: '', thinking: '', answer: '', thinkingOpen: false, toolCalls: [] };
-  const root = openAIBase(baseUrl);
+  const root = exactBase ? baseUrl : openAIBase(baseUrl);
   try {
     await streamChatCompletions({
       url: root + '/chat/completions',
@@ -498,7 +501,19 @@ async function streamClaude({ settings, model, messages, tools, showThoughts, si
   return { answer: state.answer, thinking: state.thinking, toolCalls: state.toolCalls };
 }
 
-async function streamChat({ provider, settings, model, messages, tools, showThoughts, signal, onDelta, directory }) {
+function compatibleConfig(settings, provider = settings.provider) {
+  if (!Object.hasOwn(openAICompatible, provider)) return null;
+  const preset = openAICompatible[provider];
+  const configured = settings.compatible?.[provider] || {};
+  return {
+    ...preset,
+    endpoint: preset.endpoint || configured.endpoint || '',
+    apiKey: configured.apiKey || '',
+    model: configured.model || '',
+  };
+}
+
+async function streamChat({ provider, settings, model, messages, tools, showThoughts, signal, onDelta, directory, sessionKey }) {
   const normalized = normalizeMessages(messages);
   const normalizedTools = normalizeTools(tools);
   if (!normalized.length) {
@@ -511,12 +526,24 @@ async function streamChat({ provider, settings, model, messages, tools, showThou
       model: model || 'default',
       messages: normalized,
       directory: directory || '',
+      sessionKey,
       signal,
       onDelta,
     });
   }
   if (!model) {
     throw new Error('Модель не выбрана');
+  }
+  const compatible = compatibleConfig(settings, provider);
+  if (compatible) {
+    if (!compatible.endpoint) throw new Error('Configure the API base URL in Settings → Providers.');
+    if (!compatible.apiKey && (compatible.requiresKey !== false || (compatible.freeWithoutKey && !model.endsWith(':free')))) {
+      throw new Error('Add the ' + compatible.label + ' API key in Settings → Providers.');
+    }
+    return streamOpenAI({
+      baseUrl: compatible.endpoint, apiKey: compatible.apiKey, model,
+      messages: normalized, tools: normalizedTools, signal, onDelta, exactBase: true,
+    });
   }
   if (provider === 'ollama') {
     return streamOllama({
@@ -575,6 +602,21 @@ function unique(list) {
 
 async function listModels(settings) {
   const provider = settings.provider;
+  const compatible = compatibleConfig(settings);
+  if (compatible) {
+    const fallback = unique([compatible.model, ...compatible.models]);
+    if (!compatible.endpoint || (!compatible.apiKey && compatible.requiresKey !== false)) return fallback;
+    try {
+      const headers = compatible.apiKey ? { Authorization: 'Bearer ' + compatible.apiKey } : {};
+      const data = await requestJson(compatible.endpoint + '/models', { method: 'GET', headers });
+      const discovered = (data.data || [])
+        .map((item) => item.id)
+        .filter((id) => typeof id === 'string' && (compatible.apiKey || !compatible.freeWithoutKey || id.endsWith(':free')));
+      return unique([compatible.model, ...discovered, ...compatible.models]);
+    } catch {
+      return fallback;
+    }
+  }
   try {
     if (provider === 'ollama') {
       const data = await requestJson(normalizeOllamaUrl(settings.ollamaUrl) + '/api/tags', { method: 'GET' });
@@ -628,6 +670,7 @@ async function listModels(settings) {
 
 module.exports = {
   streamChat,
+  compatibleConfig,
   listModels,
   normalizeMessages,
   openAIBase,

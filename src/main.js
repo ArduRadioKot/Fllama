@@ -10,10 +10,13 @@ const {
   pingOllama,
   probeUrl,
 } = require("./ollama-service");
-const { streamChat, listModels, openAIBase, isAbort } = require("./providers");
+const { streamChat, listModels, compatibleConfig, openAIBase, isAbort } = require("./providers");
 const { createAgentServer } = require("./agent-server");
 const { runAgentLoop } = require("./agent-loop");
 const { listDirectory } = require("./project-tools");
+const { cli } = require("./provider-catalog");
+const { cliCommand, streamCli } = require("./cli-agents");
+const { projectDirectory, inspectProject, createWorktree, listChanges, readDiff } = require("./git-workspace");
 const {
   ensureOpenCode,
   stopOpenCodeIfWeStarted,
@@ -21,6 +24,7 @@ const {
 } = require("./opencode-service");
 
 const active = new Map();
+const activeDirectories = new Set();
 let lastStatus = { state: "starting", provider: "ollama", running: false };
 
 const agent = createAgentServer({
@@ -28,6 +32,11 @@ const agent = createAgentServer({
   streamChat,
   listModels,
 });
+
+function containsDirectory(parent, child) {
+  const relative = path.relative(parent, child);
+  return !path.isAbsolute(relative) && relative !== ".." && !relative.startsWith(".." + path.sep);
+}
 
 function publish(status) {
   lastStatus = status;
@@ -38,12 +47,15 @@ function publish(status) {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 980,
-    height: 720,
+    width: 1320,
+    height: 860,
     minWidth: 720,
     minHeight: 520,
+    icon: path.join(__dirname, "fllama.png"),
     show: false,
-    backgroundColor: "#1e1e1e",
+    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
+    trafficLightPosition: { x: 19, y: 21 },
+    backgroundColor: "#171b22",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       nodeIntegration: false,
@@ -55,7 +67,20 @@ function createWindow() {
   win.webContents.on("did-finish-load", () => {
     if (!win.isDestroyed()) win.webContents.send("backend-status", lastStatus);
   });
-  win.loadFile(path.join(__dirname, "index.html"));
+  win.loadFile(path.join(__dirname, "index.html"), {
+    query: { platform: process.platform },
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
+    return { action: "deny" };
+  });
+  win.webContents.on("will-navigate", (event) => event.preventDefault());
+  const owner = win.webContents.id;
+  win.webContents.once("destroyed", () => {
+    for (const [key, controller] of active) {
+      if (key.startsWith(owner + ":")) controller.abort();
+    }
+  });
   return win;
 }
 
@@ -100,6 +125,11 @@ async function refreshBackend(settings) {
       provider: "opencode",
       error: healthy.running ? null : "opencode-stopped",
     };
+  }
+  const compatible = compatibleConfig(settings);
+  if (compatible) {
+    const ready = !!compatible.endpoint && (!!compatible.apiKey || compatible.requiresKey === false);
+    return { running: ready, state: ready ? 'ready' : 'error', provider: settings.provider };
   }
   const ok = !!settings.claudeApiKey;
   return {
@@ -177,7 +207,7 @@ ipcMain.handle("save-settings", async (_event, patch) => {
     "opencodeUrl",
     "opencodePassword",
     "autoStartOpenCode",
-  ].some((key) => prev[key] !== next[key]);
+  ].some((key) => prev[key] !== next[key]) || JSON.stringify(prev.compatible) !== JSON.stringify(next.compatible);
   if (backendChanged) {
     publish({ state: "starting", provider: next.provider, running: false });
     try {
@@ -230,8 +260,9 @@ ipcMain.handle("get-integration-status", async () => {
     ollamaBin: findInPath("ollama"),
     ollamaRunning,
     lmstudioRunning,
-    claudeBin: findInPath("claude"),
-    codexBin: findInPath("codex"),
+    claudeBin: cliCommand("claude-cli"),
+    codexBin: cliCommand("codex-cli"),
+    cli: Object.fromEntries(Object.keys(cli).map((id) => [id, cliCommand(id)])),
     opencodeBin: findInPath("opencode"),
     opencodeRunning: (await pingOpenCode(settings.opencodeUrl, settings))
       .running,
@@ -239,9 +270,11 @@ ipcMain.handle("get-integration-status", async () => {
   };
 });
 
-ipcMain.handle("get-models", async () => {
+ipcMain.handle("get-models", async (_event, provider) => {
   try {
-    return await listModels(getSettings());
+    const settings = getSettings();
+    if (Object.hasOwn(cli, provider || "")) return ["default"];
+    return await listModels({ ...settings, provider: provider || settings.provider });
   } catch {
     return [];
   }
@@ -251,19 +284,38 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
   const requestId = payload.requestId
     ? String(payload.requestId)
     : String(Date.now());
+  const key = event.sender.id + ":" + requestId;
+  if (active.has(key)) return { error: "This request is already running." };
   const controller = new AbortController();
-  active.set(requestId, controller);
+  active.set(key, controller);
   const settings = getSettings();
   let thinking = "";
   let answer = "";
   let activity = "";
   const provider = payload.provider || settings.provider;
-  const projectWork =
-    payload.workspace === "project" &&
-    payload.projectPath &&
-    provider !== "opencode";
+  const native = Object.hasOwn(cli, provider);
+  let directory = "";
+  let locked = false;
   try {
-    const run = projectWork ? runAgentLoop : streamChat;
+    if (payload.workspace === "project") {
+      directory = await projectDirectory(payload.projectPath);
+      if ([...activeDirectories].some((other) => containsDirectory(other, directory) || containsDirectory(directory, other))) {
+        return { error: "Another task is using this folder. Use separate Git worktrees to run both tasks." };
+      }
+      activeDirectories.add(directory);
+      locked = true;
+    }
+    if (provider === "opencode" && !directory) return { error: "OpenCode requires a project folder." };
+    if (provider === "opencode" && settings.autoStartOpenCode) {
+      const status = await ensureOpenCode(settings);
+      if (!status.running) throw new Error(status.error || "OpenCode is unavailable.");
+    }
+    if (provider === "ollama" && settings.autoStartOllama) {
+      const status = await ensureOllama(settings);
+      if (!status.running) throw new Error(status.error || "Ollama is unavailable.");
+    }
+    controller.signal.throwIfAborted();
+    const run = native ? streamCli : directory && provider !== "opencode" ? runAgentLoop : streamChat;
     const result = await run({
       streamChat,
       provider,
@@ -273,8 +325,9 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
       tools: payload.tools,
       showThoughts: payload.showThoughts !== false,
       signal: controller.signal,
-      projectRoot: payload.projectPath,
-      directory: payload.workspace === "project" ? payload.projectPath : "",
+      projectRoot: directory,
+      directory,
+      sessionKey: String(payload.sessionKey || requestId),
       lang: payload.lang || "ru",
       onDelta: (delta) => {
         thinking = delta.thinking || "";
@@ -297,6 +350,7 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
       activity: result.activity || activity,
     };
   } catch (error) {
+    if (error.cancellationUnconfirmed) return { answer, thinking, activity, error: error.message };
     if (isAbort(error) || controller.signal.aborted) {
       return { answer, thinking, activity, aborted: true };
     }
@@ -307,12 +361,13 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
       error: error.message || "Ошибка запроса",
     };
   } finally {
-    active.delete(requestId);
+    if (locked) activeDirectories.delete(directory);
+    active.delete(key);
   }
 });
 
-ipcMain.on("abort-request", (_event, requestId) => {
-  const controller = active.get(String(requestId));
+ipcMain.on("abort-request", (event, requestId) => {
+  const controller = active.get(event.sender.id + ":" + String(requestId));
   if (controller) controller.abort();
 });
 
@@ -382,8 +437,16 @@ ipcMain.handle("list-project", async (_event, payload = {}) => {
   }
 });
 
+ipcMain.handle("inspect-project", (_event, root) => inspectProject(root));
+ipcMain.handle("create-worktree", (_event, root) => createWorktree(root, path.join(app.getPath("userData"), "worktrees")));
+ipcMain.handle("list-changes", (_event, root, base) => listChanges(root, base));
+ipcMain.handle("read-diff", (_event, root, base, file, untracked) => readDiff(root, base, file, untracked));
+ipcMain.handle("reveal-project", async (_event, root) => shell.openPath(await projectDirectory(root)));
+ipcMain.handle("cli-available", (_event, provider) => !!cliCommand(provider));
+
 ipcMain.handle("open-external", async (_event, url) => {
   try {
+    if (typeof url !== "string" || !/^(https?:\/\/|mailto:)/i.test(url)) throw new Error("Unsupported link");
     await shell.openExternal(url);
     return { success: true };
   } catch (error) {

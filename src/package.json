@@ -20,7 +20,7 @@
     "email": "frogeesoft.team@gmail.com"
   },
   "license": "GPL-2.0",
-  "description": "Desktop chat on Electron for Ollama",
+  "description": "Local desktop workspace for orchestrating coding agents",
   "homepage": "https://github.com/arduradiokot/fllama",
   "dependencies": {
     "axios": "^1.11.0"
@@ -48,6 +48,11 @@
       "project-tools.js",
       "agent-loop.js",
       "opencode-service.js",
+      "cli-agents.js",
+      "provider-catalog.js",
+      "locale-messages.js",
+      "fllama.png",
+      "git-workspace.js",
       "index.html",
       "style.css",
       "package.json"
@@ -63,7 +68,7 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
+      "icon": "fllama.png",
       "identity": null
     },
     "win": {
@@ -75,7 +80,7 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "fllama.png"
     },
     "linux": {
       "target": [
@@ -92,7 +97,7 @@
           ]
         }
       ],
-      "icon": "build/icon.png",
+      "icon": "fllama.png",
       "category": "Utility",
       "maintainer": "ArduRadioKot <frogeesoft.team@gmail.com>"
     },
@@ -103,8 +108,7 @@
       "createStartMenuShortcut": true
     },
     "dmg": {
-      "title": "Fllama",
-      "icon": "build/icon.icns"
+      "title": "Fllama"
     }
   }
 }

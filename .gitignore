@@ -3,4 +3,6 @@ dist/
 build/
 .env
 .DS_Store
-*.log 
+*.log
+/docs/
+/.taste-skill/

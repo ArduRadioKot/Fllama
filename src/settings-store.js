@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
+const { openAICompatible } = require('./provider-catalog');
 
 const DEFAULTS = {
   provider: 'ollama',
@@ -24,11 +25,12 @@ const DEFAULTS = {
   agentServerApiKey: '',
   agentModel: '',
   lastModel: '',
+  compatible: {},
 };
 
 const KEYS = Object.keys(DEFAULTS);
 const URL_KEYS = ['ollamaUrl', 'lmstudioUrl', 'codexBaseUrl', 'claudeBaseUrl', 'opencodeUrl'];
-const PROVIDERS = ['ollama', 'lmstudio', 'codex', 'claude', 'opencode'];
+const PROVIDERS = ['ollama', 'lmstudio', 'codex', 'claude', 'opencode', ...Object.keys(openAICompatible)];
 
 let cache = null;
 
@@ -45,7 +47,7 @@ function getSettings() {
       cache = { ...DEFAULTS };
     }
   }
-  return { ...cache };
+  return { ...cache, compatible: structuredClone(cache.compatible || {}) };
 }
 
 function saveSettings(patch) {
@@ -80,10 +82,37 @@ function saveSettings(patch) {
     next[key] = typeof next[key] === 'string' ? next[key].trim() : '';
   }
 
-  cache = next;
+  next.compatible = { ...current.compatible };
+  for (const [id, config] of Object.entries(openAICompatible)) {
+    const entry = incoming.compatible?.[id];
+    if (!entry || typeof entry !== 'object') continue;
+    const previous = current.compatible[id] || {};
+    let endpoint = config.endpoint;
+    if (!endpoint && typeof entry.endpoint === 'string') {
+      const value = entry.endpoint.trim().replace(/\/+$/, '');
+      try {
+        const url = new URL(value);
+        if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+          throw new Error('Enter an HTTP(S) API base URL without credentials, query or fragment.');
+        }
+        endpoint = value;
+      } catch {
+        if (value) throw new Error('Invalid OpenAI-compatible API base URL.');
+      }
+    }
+    next.compatible[id] = {
+      endpoint,
+      apiKey: typeof entry.apiKey === 'string' ? entry.apiKey.trim() : previous.apiKey || '',
+      model: typeof entry.model === 'string' ? entry.model.trim() : previous.model || '',
+    };
+  }
+
   fs.mkdirSync(path.dirname(filePath()), { recursive: true });
-  fs.writeFileSync(filePath(), JSON.stringify(next, null, 2));
-  return { ...cache };
+  const pending = filePath() + ".tmp";
+  fs.writeFileSync(pending, JSON.stringify(next, null, 2), { mode: 0o600 });
+  fs.renameSync(pending, filePath());
+  cache = next;
+  return { ...cache, compatible: structuredClone(cache.compatible || {}) };
 }
 
 module.exports = { DEFAULTS, getSettings, saveSettings };

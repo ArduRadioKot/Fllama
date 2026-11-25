@@ -1,99 +1,50 @@
 # Fllama
----
-[README_EN](README) | [README_RU](READMERU)
 
-**Fllama** is a cross-platform desktop chat client built with Electron for working with Ollama.
+[Русский](READMERU.md)
 
-![image](images/landing.png)
+Fllama is a desktop workspace for running coding agents across local projects. Choose an agent and a model for each task, run tasks in parallel, and review their file changes in one window.
 
-## Features
+## Run locally
 
-- Modern Electron-based interface
-- Ollama support
-- Windows, macOS (Intel & Apple Silicon), Linux support
-- Fast setup and launch
+Install Node.js and Git, then run these commands from the repository root.
 
-## Technologies
-
-- **Electron** — framework for building desktop applications.
-- **Node.js** — for running Electron and managing dependencies.
-- **HTML5** — user interface markup.
-- **CSS3** — styling and responsive design.
-- **JavaScript** — application logic, interaction with Electron and Ollama API.
-- **Ollama API** — integration with the local Ollama server for working with language models.
-
-## Screenshots
-![image](images/screen1.png)
-![image](images/screen2.png)
-
-## Requirements
-
-Fllama requires Ollama to be installed on your system.
-
-- **Windows**: Download the installer from the [official Ollama website](https://ollama.com/download/windows) and follow the instructions.
-- **macOS**: Download the .dmg from the [official Ollama website](https://ollama.com/download/mac) and move Ollama to the Applications folder.
-- **Linux**: Run in terminal:
-  ```sh
-  curl -fsSL https://ollama.com/install.sh | sh
-  ```
-
-Check installation:
 ```sh
-ollama --version
+cd src
+npm ci
+npm start
 ```
 
-## Installation
+Git is required for worktrees and change review. Connect the agent you intend to use.
 
-### Pre-built releases
+| Agent | Setup |
+| --- | --- |
+| Codex CLI | Install and sign in to the `codex` executable on your PATH. |
+| Claude Code CLI | Install and sign in to the `claude` executable on your PATH. |
+| OpenCode | Install `opencode` or configure the URL of a running OpenCode server in Settings. Select a project before running a task. |
+| Ollama | Run Ollama locally and pull a model from the **Ollama models** panel. |
+| LM Studio | Start its local server and check the URL in Settings. |
+| OpenAI API / Anthropic API | Enter a key and configure the endpoint in Settings. |
 
-Download the latest version from [GitHub Releases](https://github.com/ollama/fllama/releases).
+The interface is available in English, Russian, German and Spanish. Choose a language in **Settings → Interface**.
 
-### Build from source
+| Additional integration | Setup |
+| --- | --- |
+| Kiro, Hermes, Cline, Roo Code, Gemini CLI | Install and authenticate the relevant CLI, then open a project and select it for a task. |
+| Kilo Code CLI | Install `kilo` on PATH and use `kilo auth` to connect a provider. Select Kilo Code CLI in a project task. |
+| OpenRouter, Gemini API, DeepSeek, Groq, xAI, Mistral, Kilo Gateway | Configure the provider in **Settings → Providers**. Without a Kilo key, choose a model marked `:free`. |
+| OpenAI-compatible | Set the API base URL and an optional key in **Settings → Providers**. Models can also be entered by ID. |
 
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/arduradiokot/fllama.git
-   cd fllama
-   ```
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
-3. Start the app in development mode:
-   ```sh
-   npm start
-   ```
-4. To build for your platform:
-   - **Windows x64:**  `npm run build:win-x64`
-   - **macOS x64:**  `npm run build:mac-x64`
-   - **macOS ARM64 (Apple Silicon):**  `npm run build:mac-arm64`
-   - **Linux x64:**  `npm run build:linux-x64`
+## Work with agents
 
-## Project Structure
+1. Open a project folder or create a scratchpad task for a conversation without project files.
+2. Choose an agent and a model, then describe the task. Pick **Worktree** to isolate changes when the folder is a Git repository with a commit. Pick **Project folder** to work on the selected files directly.
+3. Start another task to run agents in parallel. In each task, the inspector shows run status, activity, files, and the Git diff.
+4. Use **Hand off to an agent** to start a follow-up with the previous prompt and response. A worktree handoff shares the existing branch and checkout, so the next agent can review its changes.
 
-```
-.
-├── main.js         # Electron entry point
-├── preload.js      # Electron preload script
-├── renderer.js     # Renderer (UI) logic
-├── index.html      # Main HTML interface
-├── style.css       # Application styles
-├── build/          # Platform icons
-├── dist/           # Platform builds
-├── package.json    # Project and build configuration
-└── .gitignore
-```
+Each new worktree starts from the current Git commit on a separate `fllama/…` branch. Uncommitted edits stay in the original checkout. Tasks that share a checkout run one at a time. Deleting a task keeps the worktree and branch on disk so its code can still be recovered. Fllama leaves merging to Git.
+
+Fllama can also expose its local model server from **Settings → Fllama as an agent**.
 
 ## License
 
-This project is licensed under the GNU GPL v2.0. See the [LICENSE]([[LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository and create a new branch for your feature or fix.
-2. Write clear commit messages.
-3. Open a Pull Request with a description of your changes.
-
-Please follow common code style and contribution guidelines. 
+[GNU GPL v2.0](LICENSE)

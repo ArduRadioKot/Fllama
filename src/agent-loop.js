@@ -93,11 +93,12 @@ async function runAgentLoop({ streamChat, provider, settings, model, messages, p
     activity.push(toolLine(lang, call));
     publish();
     let output = '';
+    signal?.throwIfAborted();
     try {
       output = String(await executeTool(projectRoot, call));
     } catch (error) {
       output = 'Ошибка: ' + (error.message || error);
-      activity[activity.length - 1] += ' — ' + output;
+      activity[activity.length - 1] += ' - ' + output;
     }
     if (output.length > 12000) output = output.slice(0, 12000) + '\n…';
     history.push({ role: 'assistant', content: answer || `[tool call: ${call.name}]`, tool_calls: [call] });

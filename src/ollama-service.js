@@ -30,6 +30,8 @@ function ollamaEnv() {
     '/usr/bin',
     '/bin',
     path.join(home, '.local', 'bin'),
+    path.join(home, '.opencode', 'bin'),
+    path.join(home, '.kiro', 'bin'),
   ];
   if (process.platform === 'win32' && env.LOCALAPPDATA) {
     extra.unshift(path.join(env.LOCALAPPDATA, 'Programs', 'Ollama'));

@@ -1,6 +1,7 @@
 const http = require('http');
 const https = require('https');
 const { spawn } = require('child_process');
+const { setTimeout: wait } = require('node:timers/promises');
 const { findInPath, ollamaEnv } = require('./ollama-service');
 
 let childProcess = null;
@@ -48,6 +49,7 @@ function request(urlStr, { method = 'GET', headers = {}, body = null, signal, ti
       port: url.port || undefined,
       path: url.pathname + url.search,
       method,
+      signal,
       headers: reqHeaders,
     }, (res) => {
       const chunks = [];
@@ -66,14 +68,6 @@ function request(urlStr, { method = 'GET', headers = {}, body = null, signal, ti
       });
     });
     req.setTimeout(timeout, () => req.destroy(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' })));
-    if (signal) {
-      if (signal.aborted) {
-        req.destroy(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-        return;
-      }
-      const onAbort = () => req.destroy(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-      signal.addEventListener('abort', onAbort, { once: true });
-    }
     req.on('error', reject);
     if (payload) req.write(payload);
     req.end();
@@ -116,7 +110,7 @@ function messageText(message) {
   if (Array.isArray(parts)) {
     return parts.map((part) => {
       if (typeof part === 'string') return part;
-      return part?.text || part?.content || '';
+      return !part?.type || part.type === 'text' ? (part?.text || part?.content || '') : '';
     }).filter(Boolean).join('');
   }
   return '';
@@ -130,162 +124,143 @@ async function listOpenCodeModels(settings) {
   const root = normalizeUrl(settings.opencodeUrl);
   const headers = authHeader(settings);
   try {
-    const res = await request(root + '/api/model', { headers, timeout: 8000 });
-    const models = asArray(res.json).map((model) => model.id || model.name || [model.providerID, model.modelID].filter(Boolean).join('/')).filter(Boolean);
-    if (models.length) return [...new Set(models)].slice(0, 80);
-  } catch {
-    // older servers expose providers instead
-  }
-  try {
-    const res = await request(root + '/config/providers', { headers, timeout: 8000 });
+    const res = await request(root + '/config/providers', { headers, timeout: 5000 });
     const providers = unwrap(res.json);
     const list = Array.isArray(providers) ? providers : (providers?.providers || []);
     const models = [];
     for (const provider of list) {
-      const items = provider.models || provider.modelsList || [];
-      if (Array.isArray(items)) {
-        for (const model of items) models.push(typeof model === 'string' ? model : (model.id || model.name));
+      for (const [key, model] of Object.entries(provider.models || provider.modelsList || {})) {
+        const id = typeof model === 'string' ? model : (model.id || key);
+        if (provider.id && id) models.push(provider.id + '/' + id);
       }
     }
-    if (models.length) return [...new Set(models.filter(Boolean))].slice(0, 80);
+    if (models.length) return [...new Set(models)].slice(0, 80);
   } catch {
-    // no model list
+    // The experimental server surface lists models separately.
   }
-  return ['default'];
-}
-
-async function createSession(root, headers, directory, model) {
-  const location = directory ? { directory } : undefined;
   try {
-    const res = await request(root + '/api/session', {
-      method: 'POST',
-      headers: { ...headers, ...(directory ? { 'x-opencode-directory': directory } : {}) },
-      body: { title: 'Fllama', location, model: model && model !== 'default' ? model : undefined },
-      timeout: 20000,
+    const res = await request(root + '/api/model', { headers, timeout: 5000 });
+    return [...new Set(asArray(res.json).map((model) => {
+      if (model.providerID && model.modelID) return model.providerID + '/' + model.modelID;
+      return model.id || '';
+    }).filter(Boolean))].slice(0, 80);
+  } catch {
+    return [];
+  }
+}
+
+async function createSession(root, headers, directory, signal) {
+  try {
+    const response = await request(root + '/session', {
+      method: 'POST', headers, body: { title: 'Fllama' }, signal,
     });
-    const data = unwrap(res.json);
+    const data = unwrap(response.json);
     const id = data?.id || data?.sessionID;
-    if (id) return { id, style: 'v2' };
+    if (id) return { id, prefix: '', experimental: false };
   } catch (error) {
-    if (error.statusCode && error.statusCode !== 404) throw error;
+    if (error.statusCode !== 404) throw error;
   }
-  const res = await request(root + '/session', {
-    method: 'POST',
-    headers: { ...headers, ...(directory ? { 'x-opencode-directory': directory } : {}) },
-    body: {},
-    timeout: 20000,
+  const response = await request(root + '/api/session', {
+    method: 'POST', headers, body: { title: 'Fllama', location: directory ? { directory } : undefined }, signal,
   });
-  const data = unwrap(res.json);
-  return { id: data?.id || data, style: 'v1' };
+  const data = unwrap(response.json);
+  const id = data?.id || data?.sessionID;
+  if (!id) throw new Error('OpenCode did not return a session ID.');
+  return { id, prefix: '/api', experimental: true };
 }
 
-async function readMessages(root, headers, session) {
-  const path = session.style === 'v2'
-    ? `/api/session/${encodeURIComponent(session.id)}/message?order=asc&limit=40`
-    : `/session/${encodeURIComponent(session.id)}/message`;
-  const res = await request(root + path, { headers, timeout: 15000 });
-  return asArray(res.json);
+function assistantTurn(messages, priorIds) {
+  const fresh = messages.filter((message) => !priorIds.has(message.id || message.info?.id));
+  const assistants = fresh.filter((message) => ['assistant', 'ai'].includes(messageKind(message)));
+  const latest = assistants.at(-1);
+  const error = latest?.info?.error || latest?.error;
+  return {
+    text: assistants.map(messageText).filter(Boolean).join('\n\n'),
+    done: !!(latest?.info?.time?.completed || latest?.time?.completed || fresh.at(-1)?.type === 'idle'),
+    error: error && (error.data?.message || error.message || error.name),
+  };
 }
 
-function latestAssistant(messages) {
-  let text = '';
-  let idle = false;
-  for (const message of messages) {
-    const kind = messageKind(message);
-    if (kind === 'idle') idle = true;
-    if (kind === 'assistant' || kind === 'ai' || (!kind && messageText(message))) {
-      const next = messageText(message);
-      if (next) text = next;
-    }
-  }
-  return { text, idle };
-}
-
-async function streamOpenCode({ settings, model, messages, directory, signal, onDelta }) {
+async function streamOpenCode({ settings, model, messages, directory, signal, onDelta, sessionKey }) {
   const root = normalizeUrl(settings.opencodeUrl);
-  const headers = authHeader(settings);
-  const lastUser = [...(messages || [])].reverse().find((message) => message.role === 'user');
-  const text = lastUser?.content || '';
-  if (!text.trim()) throw new Error('Пустое сообщение');
-  const key = root + '|' + (directory || '');
+  const dirHeaders = { ...authHeader(settings), ...(directory ? { 'x-opencode-directory': encodeURIComponent(directory) } : {}) };
+  const key = JSON.stringify([root, settings.opencodeUsername, directory, sessionKey, model]);
   let session = sessions.get(key);
+  const lastUser = messages.findLast((message) => message.role === 'user');
+  // After an app restart, reconstruct context for a new server session.
+  const text = session || messages.length === 1
+    ? lastUser?.content
+    : messages.map(({ role, content }) => '[' + role + ']\n' + content).join('\n\n');
+  if (!text?.trim()) throw new Error('OpenCode requires a prompt.');
   if (!session) {
-    session = await createSession(root, headers, directory, model);
+    session = await createSession(root, dirHeaders, directory, signal);
     sessions.set(key, session);
   }
-  const dirHeaders = { ...headers, ...(directory ? { 'x-opencode-directory': directory } : {}) };
-  if (session.style === 'v2') {
-    await request(`${root}/api/session/${encodeURIComponent(session.id)}/prompt`, {
-      method: 'POST',
-      headers: dirHeaders,
-      body: { text },
-      timeout: 20000,
-      signal,
-    });
-  } else {
-    const posted = await request(`${root}/session/${encodeURIComponent(session.id)}/message`, {
-      method: 'POST',
-      headers: dirHeaders,
-      body: { parts: [{ type: 'text', text }] },
-      timeout: 120000,
-      signal,
-    });
-    const immediate = messageText(unwrap(posted.json));
-    if (immediate) {
-      if (onDelta) onDelta({ thinking: '', answer: immediate, thinkingOpen: false, activity: 'OpenCode' });
-      return { answer: immediate, thinking: '', activity: 'OpenCode' };
-    }
-  }
-
-  let before = [];
-  try {
-    before = await readMessages(root, dirHeaders, session);
-  } catch {
-    before = [];
-  }
-  const priorIds = new Set(before.map((message) => message?.id || message?.info?.id || '').filter(Boolean));
-  const priorText = latestAssistant(before).text;
-  const started = Date.now();
-  let answer = '';
-  let stable = 0;
-  while (Date.now() - started < 120000) {
-    if (signal?.aborted) {
-      const error = new Error('aborted');
-      error.name = 'AbortError';
-      throw error;
-    }
-    await sleep(450);
-    let messagesNow = [];
+  const url = root + session.prefix + '/session/' + encodeURIComponent(session.id);
+  const modelSeparator = model.indexOf('/');
+  const modelRef = modelSeparator > 0
+    ? { providerID: model.slice(0, modelSeparator), modelID: model.slice(modelSeparator + 1) }
+    : undefined;
+  const cancel = async () => {
     try {
-      messagesNow = await readMessages(root, dirHeaders, session);
-    } catch (error) {
-      if (error.statusCode === 404) {
-        sessions.delete(key);
-        throw new Error('Сессия OpenCode не найдена');
+      await request(url + (session.experimental ? '/interrupt' : '/abort'), {
+        method: 'POST', headers: dirHeaders, timeout: 5000,
+      });
+      return true;
+    } catch { return false; }
+  };
+  const options = { headers: dirHeaders, signal };
+  let submitted = false;
+  let answer = '';
+  const publish = () => onDelta?.({ answer, activity: 'OpenCode' });
+  try {
+    const before = await request(url + '/message', options);
+    const priorIds = new Set(asArray(before.json).map((message) => message.id || message.info?.id).filter(Boolean));
+    if (session.experimental && modelRef) {
+      await request(url + '/model', { ...options, method: 'POST', body: modelRef });
+    }
+
+    const promptPath = session.experimental ? '/prompt' : '/message';
+    const body = session.experimental ? { text } : { model: modelRef, parts: [{ type: 'text', text }] };
+    submitted = true;
+    let posted;
+    let postError;
+    let pending = true;
+    const post = request(url + promptPath, { ...options, method: 'POST', body, timeout: 900000 });
+    post.then((result) => { posted = result; pending = false; }, (error) => { postError = error; pending = false; });
+
+    const deadline = Date.now() + 900000;
+    while (Date.now() < deadline) {
+      if (postError) throw postError;
+      if (!pending && !session.experimental) {
+        const message = unwrap(posted.json);
+        const turn = assistantTurn([message], new Set());
+        if (turn.error) throw new Error(turn.error);
+        answer = turn.text || answer || messageText(message);
+        if (!answer) throw new Error('OpenCode returned no answer.');
+        publish();
+        return { answer, activity: 'OpenCode' };
       }
-      continue;
+      await wait(400, undefined, { signal });
+      const response = await request(url + '/message', options);
+      const turn = assistantTurn(asArray(response.json), priorIds);
+      if (turn.error) throw new Error(turn.error);
+      if (turn.text && turn.text !== answer) {
+        answer = turn.text;
+        publish();
+      }
+      if (session.experimental && !pending && turn.done && answer) return { answer, activity: 'OpenCode' };
     }
-    const fresh = messagesNow.filter((message) => {
-      const id = message?.id || message?.info?.id || '';
-      return !id || !priorIds.has(id);
-    });
-    const latest = latestAssistant(fresh.length ? fresh : messagesNow);
-    const text = latest.text && latest.text !== priorText ? latest.text : '';
-    if (text && text !== answer) {
-      answer = text;
-      stable = 0;
-      if (onDelta) onDelta({ thinking: '', answer, thinkingOpen: false, activity: 'OpenCode' });
-    } else if (answer) {
-      stable += 1;
+    throw new Error('OpenCode did not finish in time.');
+  } catch (error) {
+    if (error.statusCode === 404) sessions.delete(key);
+    if (submitted && !await cancel()) {
+      const failure = new Error('OpenCode did not confirm cancellation. Check the server session before retrying.');
+      failure.cancellationUnconfirmed = true;
+      throw failure;
     }
-    const last = messagesNow[messagesNow.length - 1];
-    const lastId = last?.id || last?.info?.id || '';
-    const idleNow = last && messageKind(last) === 'idle' && (!lastId || !priorIds.has(lastId));
-    if (idleNow && answer) break;
-    if (stable >= 3 && answer) break;
+    throw error;
   }
-  if (!answer) throw new Error('OpenCode не прислал ответ');
-  return { answer, thinking: '', activity: 'OpenCode' };
 }
 
 async function ensureOpenCodeInner(settings) {
@@ -318,7 +293,8 @@ async function ensureOpenCodeInner(settings) {
   if (child.stderr) {
     child.stderr.on('data', (chunk) => { stderr = (stderr + chunk.toString()).slice(-400); });
   }
-  child.on('exit', () => {
+  child.on('error', (error) => { stderr = error.message; });
+  child.on('close', () => {
     if (childProcess === child) {
       childProcess = null;
       ownedPid = null;
@@ -329,7 +305,7 @@ async function ensureOpenCodeInner(settings) {
     if ((await pingOpenCode(baseUrl, settings, 700)).running) {
       return { running: true, startedByUs: true, state: 'ready', provider: 'opencode', url: baseUrl };
     }
-    if (child.exitCode != null && Date.now() - startedAt > 1200) break;
+    if ((child.exitCode != null || !child.pid) && Date.now() - startedAt > 1200) break;
     await sleep(350);
   }
   return { running: false, state: 'error', provider: 'opencode', error: stderr.trim() || 'OpenCode не ответил' };

@@ -1,625 +1,863 @@
-const chat = document.getElementById("chat");
-const form = document.getElementById("chat-form");
-const input = document.getElementById("user-input");
-const modelSelect = document.getElementById("model-select");
+const $ = (id) => document.getElementById(id);
+const api = window.electronAPI;
+const chat = $('chat');
+const form = $('chat-form');
+const input = $('user-input');
+const modelSelect = $('model-select');
+const providerSelect = $('provider-select');
+const isolationSelect = $('isolation-select');
+
+const { labels: PROVIDERS, local: LOCAL_MODELS, api: NATIVE_APIS, cli: CLI_AGENTS, openAICompatible: COMPATIBLE } = globalThis.fllamaCatalog;
+const CUSTOM_MODEL = '\u0000custom-model';
+const ICONS = {
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="10.5" cy="10.5" r="5.5"/><path d="m15 15 4.5 4.5"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  folderPlus: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 10v6m-3-3h6"/>',
+  layers: '<path d="m12 3 9 5-9 5-9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/>',
+  panel: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M15 5v14m3-10v5"/>',
+  cube: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9ZM4 7.5l8 4.5 8-4.5M12 12v9"/>',
+  settings: '<path d="M4 7h16M4 12h16M4 17h16"/><path stroke-width="4" d="M8 7h.01m8 5h.01m-6 5h.01"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5m0-8h.01"/>',
+  terminal: '<path d="m5 7 5 5-5 5m8 0h6"/>',
+  arrowUp: '<path d="M12 19V5m-5 5 5-5 5 5"/>',
+  arrowUpRight: '<path d="M7 17 17 7M8 7h9v9"/>',
+  code: '<path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16"/>',
+  checklist: '<path d="m3 7 1.5 1.5L7 6m-4 9 1.5 1.5L7 14m4-7h10m-10 8h10"/>',
+  git: '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 8v8m12-7a6 6 0 0 1-6 6H6"/>',
+  chevronDown: '<path d="m7 10 5 5 5-5"/>',
+  chevronRight: '<path d="m10 7 5 5-5 5"/>',
+  activity: '<path d="M3 12h4l3-6 4 12 3-6h4"/>',
+  file: '<path d="M6 3h8l4 4v14H6zM14 3v5h4m-9 5h6m-6 4h6"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
+  refresh: '<path d="M19 8a7.5 7.5 0 1 0 .2 7M19 4v4h-4"/>',
+  close: '<path d="m7 7 10 10M17 7 7 17"/>',
+  check: '<path d="m5 12 4 4 10-10"/>',
+};
+
+function icon(name) {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
 
 let markdownHighlightEnabled = true;
 let chatFontSize = 14;
-let workspace = "chat";
 let showThoughts = true;
 let agentMode = false;
-let currentProvider = "ollama";
 let appSettings = {};
-let backendState = "starting";
-let activeRequestId = null;
-let streamStopped = false;
-let streamDiv = null;
-let renderScheduled = false;
-let pendingRender = null;
+let backendStatus = null;
 let settingsBound = false;
+let settingsReady = false;
 let persistChain = Promise.resolve();
+let workspaceState;
+let search = '';
+let inspectorView = 'run';
+let inspectorOpen = window.innerWidth > 790;
+let modelRequest = 0;
+let inspectorRequest = 0;
+let noticeTimer;
+let draftTimer;
+let renderScheduled = false;
+const runs = new Map();
+const modelCache = new Map();
+const lastModel = new Map();
+const providerChecks = new Map();
+const STORE_KEY = 'fllama-orchestrator-v1';
 
-// Система управления чатами
-let chats = [];
-let currentChatIndex = 0;
+const tr = (key) => i18n[currentLang]?.[key] || i18n.en[key] || key;
+const currentTask = () => workspaceState.tasks.find((task) => task.id === workspaceState.selected);
+const taskProject = (task) => workspaceState.projects.find((project) => project.id === task?.projectId);
+const taskRoot = (task) => task?.worktree?.directory || taskProject(task)?.root || '';
+const newId = () => globalThis.crypto.randomUUID();
 
-function createNewChat() {
-  const newChat = {
-    id: Date.now(),
-    name: `Чат ${chats.length + 1}`,
+function makeTask(project, provider) {
+  return {
+    id: newId(),
+    projectId: project?.id || null,
+    provider: provider || appSettings.provider || 'ollama',
+    model: '',
+    mode: project?.canIsolate ? 'worktree' : 'project',
+    title: '',
+    draft: '',
     messages: [],
+    activity: [],
+    status: 'idle',
   };
-  chats.push(newChat);
-  currentChatIndex = chats.length - 1;
-  updateChatDisplay();
-  saveChats();
 }
 
-function switchToChat(index) {
-  if (index >= 0 && index < chats.length) {
-    currentChatIndex = index;
-    updateChatDisplay();
-    if (workspace === "project") applyWorkspaceChrome();
-  }
+function readLocal(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
 }
 
-function updateChatDisplay() {
-  // Очищаем чат
-  chat.innerHTML = "";
-
-  if (chats.length === 0) {
-    if (workspace === "project") {
-      updateTabsList();
-      showProjectEmpty(true);
-      return;
-    }
-    createNewChat();
-    return;
-  }
-  showProjectEmpty(false);
-
-  if (currentChatIndex < 0 || currentChatIndex >= chats.length)
-    currentChatIndex = 0;
-  const currentChat = chats[currentChatIndex];
-
-  // Отображаем сообщения текущего чата
-  currentChat.messages.forEach((msg) => {
-    const div = document.createElement("div");
-    div.className = "message " + msg.sender;
-    div.style.fontSize = chatFontSize + "px";
-
-    if (msg.sender === "ai") {
-      const raw = String(msg.text || "");
-      const legacy = raw.match(/^\*\*Мысли:\*\*\n([\s\S]*?)\n\n([\s\S]*)$/);
-      const parts = legacy
-        ? { thinking: legacy[1].trim(), answer: legacy[2].trim() }
-        : splitThoughts(raw, "");
-      renderAiMessage(div, {
-        thinking: parts.thinking,
-        answer: parts.answer || (parts.thinking ? "" : raw),
-        final: true,
-      });
-    } else if (msg.isMarkdown && markdownHighlightEnabled) {
-      div.innerHTML = simpleMarkdown(msg.text);
-      addCopyButtonsToCodeBlocks(div);
-    } else if (msg.isMarkdown) {
-      div.innerHTML = escapeHtml(msg.text).replace(/\n/g, "<br>");
-    } else {
-      div.textContent = msg.text;
-    }
-
-    chat.appendChild(div);
-  });
-
-  chat.scrollTop = chat.scrollHeight;
-
-  // Обновляем список вкладок
-  updateTabsList();
-}
-
-function updateTabsList() {
-  const tabsList = document.getElementById("tabs-list");
-  tabsList.innerHTML = "";
-
-  chats.forEach((chat, index) => {
-    const tabItem = document.createElement("div");
-    tabItem.className = `tab-item ${index === currentChatIndex ? "active" : ""}`;
-    tabItem.innerHTML = `
-      <span class="tab-name"></span>
-      <button class="tab-close" type="button" title="${currentLang === "ru" ? "Закрыть" : "Close"}" data-tab-index="${index}">×</button>
-    `;
-    tabItem.querySelector(".tab-name").textContent = chat.name || "";
-
-    tabItem.addEventListener("click", (e) => {
-      if (!e.target.classList.contains("tab-close")) {
-        switchToChat(index);
-      }
-    });
-
-    const closeBtn = tabItem.querySelector(".tab-close");
-    closeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      deleteChat(index);
-    });
-
-    tabsList.appendChild(tabItem);
-  });
-}
-
-function deleteChat(index) {
-  if (workspace === "chat" && chats.length <= 1) {
-    alert(
-      currentLang === "ru"
-        ? "Нельзя удалить последний чат"
-        : "Cannot delete the last chat",
-    );
-    return;
-  }
-
-  chats.splice(index, 1);
-
-  if (chats.length === 0) {
-    currentChatIndex = 0;
-  } else if (currentChatIndex >= chats.length) {
-    currentChatIndex = chats.length - 1;
-  } else if (currentChatIndex > index) {
-    currentChatIndex--;
-  }
-
-  updateChatDisplay();
-  saveChats();
-  if (workspace === "project") applyWorkspaceChrome();
-}
-
-function saveChats() {
-  const key = workspace === "project" ? "fllama-projects" : "ollama-chats";
-  const indexKey =
-    workspace === "project" ? "fllama-project-index" : "ollama-current-chat";
-  localStorage.setItem(key, JSON.stringify(chats));
-  localStorage.setItem(indexKey, String(currentChatIndex));
-  localStorage.setItem("fllama-workspace", workspace);
-}
-
-function readStore(mode) {
-  const key = mode === "project" ? "fllama-projects" : "ollama-chats";
-  const indexKey =
-    mode === "project" ? "fllama-project-index" : "ollama-current-chat";
-  let items = [];
+function saveWorkspace() {
   try {
-    items = JSON.parse(localStorage.getItem(key) || "[]");
+    localStorage.setItem(STORE_KEY, JSON.stringify(workspaceState));
   } catch {
-    items = [];
+    notice(tr('storage_error'));
   }
-  if (!Array.isArray(items)) items = [];
-  let index = parseInt(localStorage.getItem(indexKey) || "0", 10);
-  if (!Number.isFinite(index)) index = 0;
-  return { items, index };
 }
 
-function loadChats() {
-  workspace =
-    localStorage.getItem("fllama-workspace") === "project" ? "project" : "chat";
-  const stored = readStore(workspace);
-  chats = stored.items;
-  currentChatIndex = stored.index;
-  if (workspace === "chat" && chats.length === 0) createNewChat();
-  else {
-    if (currentChatIndex >= chats.length)
-      currentChatIndex = Math.max(0, chats.length - 1);
-    updateChatDisplay();
+function loadWorkspace() {
+  workspaceState = readLocal(STORE_KEY, null);
+  if (!Array.isArray(workspaceState?.tasks) || !Array.isArray(workspaceState?.projects)) {
+    workspaceState = { tasks: [], projects: [], selected: null };
+    const importTask = (previous, project) => {
+      if (!previous || !Array.isArray(previous.messages)) return;
+      const task = makeTask(project);
+      task.title = previous.name || '';
+      task.messages = previous.messages;
+      task.status = task.messages.length ? 'done' : 'idle';
+      if (project) task.mode = 'project';
+      workspaceState.tasks.push(task);
+      return task;
+    };
+    const histories = readLocal('ollama-chats', []);
+    const projects = readLocal('fllama-projects', []);
+    const lastChat = Array.isArray(histories) ? histories.map((item) => importTask(item)).filter(Boolean) : [];
+    const lastProject = [];
+    if (Array.isArray(projects)) {
+      for (const item of projects) {
+        if (!item?.path) continue;
+        let project = workspaceState.projects.find((entry) => entry.root === item.path);
+        if (!project) {
+          project = { id: newId(), root: item.path, name: item.name || folderName(item.path) };
+          workspaceState.projects.push(project);
+        }
+        lastProject.push(importTask(item, project));
+      }
+    }
+    const selected = localStorage.getItem('fllama-workspace') === 'project'
+      ? lastProject[readLocal('fllama-project-index', 0)] : lastChat[readLocal('ollama-current-chat', 0)];
+    workspaceState.selected = selected?.id || workspaceState.tasks[0]?.id;
   }
-  applyWorkspaceChrome();
-}
-
-function setWorkspace(next) {
-  if (next === workspace) return;
-  saveChats();
-  workspace = next;
-  const stored = readStore(next);
-  chats = stored.items;
-  currentChatIndex = stored.index;
-  if (workspace === "chat" && chats.length === 0) createNewChat();
-  else {
-    if (currentChatIndex >= chats.length)
-      currentChatIndex = Math.max(0, chats.length - 1);
-    updateChatDisplay();
+  for (const task of workspaceState.tasks) {
+    if (task.status === 'running' || task.status === 'preparing') {
+      task.status = 'stopped';
+      task.error = tr('run_interrupted');
+    }
   }
-  saveChats();
-  applyWorkspaceChrome();
+  if (!currentTask()) {
+    const task = makeTask();
+    workspaceState.tasks.unshift(task);
+    workspaceState.selected = task.id;
+  }
+  saveWorkspace();
 }
 
-function showProjectEmpty(visible) {
-  const empty = document.getElementById("project-empty");
-  if (!empty) return;
-  empty.style.display = visible ? "block" : "none";
-  chat.style.display = visible ? "none" : "";
+function folderName(root) {
+  return root.split(/[/\\]/).filter(Boolean).pop() || root;
 }
 
-function applyWorkspaceChrome() {
-  document
-    .getElementById("mode-chat-btn")
-    .classList.toggle("active", workspace === "chat");
-  document
-    .getElementById("mode-project-btn")
-    .classList.toggle("active", workspace === "project");
-  document
-    .getElementById("project-panel")
-    .classList.toggle("hidden", workspace !== "project");
-  const project = workspace === "project" ? chats[currentChatIndex] : null;
-  const pathEl = document.getElementById("project-path");
-  pathEl.textContent =
-    project && project.path ? "\u200E" + project.path + "\u200E" : "";
-  pathEl.title = project && project.path ? project.path : "";
-  if (workspace === "project" && project && project.path)
-    loadProjectTree(project.path);
-  else document.getElementById("project-tree").textContent = "";
-  showProjectEmpty(workspace === "project" && chats.length === 0);
+function notice(message) {
+  const element = $('notice');
+  element.textContent = message;
+  element.hidden = false;
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => { element.hidden = true; }, 4900);
+}
+
+function makeElement(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text != null) element.textContent = text;
+  return element;
+}
+
+function createTask(project = taskProject(currentTask()), { draft = '', provider, worktree } = {}) {
+  const task = makeTask(project, provider);
+  task.draft = draft;
+  if (worktree) {
+    task.worktree = worktree;
+    task.mode = 'worktree';
+  }
+  workspaceState.tasks.unshift(task);
+  search = '';
+  $('task-search').value = '';
+  selectTask(task.id);
+  input.focus();
+}
+
+function selectTask(id) {
+  if (!workspaceState.tasks.some((task) => task.id === id)) return;
+  workspaceState.selected = id;
+  const task = currentTask();
+  input.value = task.draft;
+  providerSelect.value = task.provider;
+  renderWorkspace();
+  loadModels();
+  saveWorkspace();
+}
+
+function removeTask(task) {
+  if (runs.has(task.id)) return;
+  if ((task.messages.length || task.worktree) && !confirm(tr(task.worktree ? 'remove_worktree_task' : 'remove_task_confirm'))) return;
+  workspaceState.tasks = workspaceState.tasks.filter((item) => item.id !== task.id);
+  if (!currentTask()) {
+    const next = workspaceState.tasks.find((item) => item.projectId === task.projectId) || workspaceState.tasks[0];
+    if (next) selectTask(next.id);
+    else createTask(taskProject(task));
+  } else {
+    renderNavigation();
+    saveWorkspace();
+  }
 }
 
 async function openProject() {
-  const picked = await window.electronAPI.pickProject();
-  if (!picked) return;
-  if (workspace !== "project") setWorkspace("project");
-  const existing = chats.findIndex((item) => item.path === picked);
-  if (existing >= 0) {
-    switchToChat(existing);
-    return;
+  try {
+    const picked = await api.pickProject();
+    if (!picked) return;
+    const info = await api.inspectProject(picked);
+    let project = workspaceState.projects.find((entry) => entry.root === info.root || entry.root === picked);
+    if (!project) {
+      project = { id: newId(), root: info.root, name: folderName(info.root) };
+      workspaceState.projects.unshift(project);
+    }
+    applyProjectInfo(project, info);
+    const existing = workspaceState.tasks.find((task) => task.projectId === project.id);
+    if (existing) selectTask(existing.id);
+    else createTask(project);
+  } catch (error) {
+    notice(error.message);
   }
-  const name = picked.split(/[/\\]/).pop() || picked;
-  chats.push({ id: Date.now(), name, path: picked, messages: [] });
-  currentChatIndex = chats.length - 1;
-  updateChatDisplay();
-  saveChats();
-  applyWorkspaceChrome();
 }
 
-async function loadProjectTree(root, path, container) {
-  const host = container || document.getElementById("project-tree");
-  if (!container) host.textContent = "";
-  const entries = await window.electronAPI.listProject(root, path || ".");
-  if (!entries || entries.error) {
-    host.textContent = entries && entries.error ? entries.error : "";
-    return;
+function applyProjectInfo(project, info) {
+  project.git = info.git;
+  project.branch = info.branch || '';
+  project.canIsolate = info.git && info.root === info.repo && !!info.head;
+  if (!project.canIsolate) {
+    for (const task of workspaceState.tasks) {
+      if (task.projectId === project.id && !task.worktree && !runs.has(task.id)) task.mode = 'project';
+    }
   }
-  entries.forEach((entry) => {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = "tree-item " + (entry.type === "dir" ? "is-dir" : "is-file");
-    row.innerHTML =
-      '<span class="tree-chevron"></span><span class="tree-icon"></span><span class="tree-name"></span>';
-    row.querySelector(".tree-name").textContent = entry.name;
-    row.title = entry.path;
-    const child = document.createElement("div");
-    child.className = "tree-children";
-    child.style.display = "none";
-    row.addEventListener("click", async () => {
-      document
-        .querySelectorAll("#project-tree .tree-item.selected")
-        .forEach((item) => item.classList.remove("selected"));
-      row.classList.add("selected");
-      if (entry.type === "dir") {
-        const open = child.style.display === "none";
-        child.style.display = open ? "block" : "none";
-        row.classList.toggle("open", open);
-        if (open && !child.dataset.loaded) {
-          child.dataset.loaded = "1";
-          await loadProjectTree(root, entry.path, child);
-        }
-      } else {
-        const prefix =
-          input.value && !input.value.endsWith(" ")
-            ? input.value + " "
-            : input.value;
-        input.value = prefix + entry.path;
-        input.focus();
+}
+
+function statusName(task) {
+  return tr(`status_${task.status || 'idle'}`);
+}
+
+function renderNavigation() {
+  const list = $('project-list');
+  list.replaceChildren();
+  const active = currentTask();
+  const matches = (task) => !search || `${task.title || tr('new_task')} ${PROVIDERS[task.provider]} ${taskProject(task)?.name || ''}`.toLocaleLowerCase().includes(search);
+
+  function renderGroup(project) {
+    const tasks = workspaceState.tasks.filter((task) => task.projectId === (project?.id || null) && matches(task));
+    if (search && !tasks.length) return;
+    const group = makeElement('div', 'project-group');
+    const heading = makeElement('div', 'project-heading');
+    const projectButton = makeElement('button', 'project-heading-button');
+    projectButton.type = 'button';
+    projectButton.innerHTML = icon(project ? 'folder' : 'layers');
+    projectButton.append(makeElement('span', '', project?.name || tr('scratchpad')));
+    projectButton.title = project?.root || tr('scratchpad');
+    projectButton.onclick = () => {
+      if (tasks[0]) selectTask(tasks[0].id);
+      else createTask(project);
+    };
+    heading.append(projectButton);
+    const add = makeElement('button', 'icon-action small group-add');
+    add.type = 'button';
+    add.innerHTML = icon('plus');
+    add.title = tr('new_task');
+    add.setAttribute('aria-label', add.title);
+    add.onclick = () => createTask(project);
+    heading.append(add);
+    group.append(heading);
+    for (const task of tasks) {
+      const item = makeElement('div', `task-row${task.id === active?.id ? ' active' : ''}`);
+      const button = makeElement('button', 'task-select');
+      button.type = 'button';
+      button.title = (task.title || tr('new_task')) + ' · ' + statusName(task);
+      if (task.id === active?.id) button.setAttribute('aria-current', 'true');
+      const dot = makeElement('span', 'task-dot ' + task.status);
+      button.append(dot, makeElement('span', 'task-row-name', task.title || tr('new_task')));
+      button.onclick = () => selectTask(task.id);
+      item.append(button);
+      if (!runs.has(task.id)) {
+        const remove = makeElement('button', 'icon-action small task-remove');
+        remove.type = 'button';
+        remove.innerHTML = icon('close');
+        remove.title = tr('remove_task');
+        remove.setAttribute('aria-label', remove.title);
+        remove.onclick = () => removeTask(task);
+        item.append(remove);
       }
-    });
-    host.appendChild(row);
-    if (entry.type === "dir") host.appendChild(child);
-  });
+      group.append(item);
+    }
+    list.append(group);
+  }
+
+  workspaceState.projects.forEach(renderGroup);
+  renderGroup(null);
+  if (search && !list.childElementCount) {
+    list.append(makeElement('p', 'nav-empty', tr('no_tasks')));
+  } else if (!workspaceState.projects.length && !search) {
+    const add = makeElement('button', 'add-project');
+    add.type = 'button';
+    add.innerHTML = icon('plus');
+    add.append(makeElement('span', '', tr('project_open')));
+    add.onclick = openProject;
+    list.append(add);
+  }
+
+  const count = $('running-count');
+  count.classList.toggle('has-runs', runs.size > 0);
+  count.textContent = runs.size ? tr('running_count').replace('{count}', runs.size) : tr('no_runs');
 }
 
-function bindStream() {
-  window.electronAPI.onStreamUpdate((_event, data) => {
-    if (
-      !data ||
-      data.requestId !== activeRequestId ||
-      streamStopped ||
-      !streamDiv
-    )
-      return;
-    if (streamDiv.dataset.done === "1") return;
-    scheduleStreamRender(streamDiv, {
-      thinking: data.thinking || "",
-      answer: data.answer || "",
-      activity: data.activity || "",
-      thinkingOpen: !!data.thinkingOpen,
-      final: false,
-    });
-  });
+function renderWorkspace() {
+  const task = currentTask();
+  const project = taskProject(task);
+  $('task-project').textContent = project?.name || tr('scratchpad');
+  $('task-project').title = project?.root || '';
+  $('task-title').textContent = task.title || tr('new_task');
+  $('task-location-icon').innerHTML = icon(project ? 'folder' : 'layers');
+  renderNavigation();
+  renderMessages(true);
+  renderComposer();
+  renderInspector(true);
+  renderBackendStatus();
 }
 
-function scheduleStreamRender(div, state) {
-  pendingRender = { div, state };
-  if (renderScheduled) return;
-  renderScheduled = true;
-  requestAnimationFrame(() => {
-    renderScheduled = false;
-    const job = pendingRender;
-    pendingRender = null;
-    if (!job || !job.div.isConnected || job.div.dataset.done === "1") return;
-    renderAiMessage(job.div, job.state);
-    const nearBottom =
-      chat.scrollHeight - chat.scrollTop - chat.clientHeight < 140;
-    if (nearBottom) chat.scrollTop = chat.scrollHeight;
-  });
+function renderComposer() {
+  const task = currentTask();
+  const project = taskProject(task);
+  const running = runs.has(task.id);
+  const fixed = task.messages.some((message) => message.sender === 'ai') && !!task.model;
+  $('send-btn').hidden = running;
+  $('send-btn').disabled = !settingsReady || !input.value.trim() || !task.model;
+  $('reload-models').hidden = running;
+  $('stop-btn').hidden = !running;
+  $('stop-btn').disabled = !!runs.get(task.id)?.stopping;
+  input.disabled = running;
+  providerSelect.disabled = fixed || running;
+  modelSelect.disabled = fixed || running;
+  isolationSelect.disabled = fixed || running || !!task.worktree;
+  $('isolation-control').hidden = !project?.canIsolate && !task.worktree;
+  isolationSelect.value = task.mode;
+  $('composer-context').textContent = task.worktree?.branch
+    || (project ? tr(task.mode === 'worktree' ? 'new_worktree_hint' : 'project_folder_hint') : tr('scratchpad_hint'));
+  $('composer-context').title = taskRoot(task);
+}
+
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]);
 }
 
 function renderAiMessage(div, state) {
-  const thinking = showThoughts ? state.thinking || "" : "";
-  const useMarkdown = !!state.final && markdownHighlightEnabled;
-  let thoughtsEl = div.querySelector(":scope > .thoughts");
-  let answerEl = div.querySelector(":scope > .answer-text");
-  if (!answerEl) {
-    div.textContent = "";
-    answerEl = document.createElement("div");
-    answerEl.className = "answer-text";
-    div.appendChild(answerEl);
+  const thinking = showThoughts ? state.thinking : '';
+  let details = div.querySelector(':scope > details');
+  if (thinking && !details) {
+    details = makeElement('details', 'thoughts');
+    details.append(makeElement('summary'), makeElement('div', 'thinking-text plain'));
+    div.prepend(details);
   }
   if (thinking) {
-    if (!thoughtsEl) {
-      thoughtsEl = document.createElement("details");
-      thoughtsEl.className = "thoughts";
-      thoughtsEl.open = true;
-      const summary = document.createElement("summary");
-      const body = document.createElement("div");
-      body.className = "thinking-text plain";
-      thoughtsEl.appendChild(summary);
-      thoughtsEl.appendChild(body);
-      div.insertBefore(thoughtsEl, answerEl);
-    }
-    thoughtsEl.querySelector("summary").textContent =
-      state.thinkingOpen && !state.final
-        ? currentLang === "ru"
-          ? "Мысли…"
-          : "Thinking…"
-        : currentLang === "ru"
-          ? "Мысли"
-          : "Thoughts";
-    const body = thoughtsEl.querySelector(".thinking-text");
-    if (useMarkdown) {
-      body.classList.remove("plain");
-      body.innerHTML = simpleMarkdown(thinking);
-    } else {
-      body.classList.add("plain");
-      body.textContent = thinking;
-    }
-  } else if (thoughtsEl) {
-    thoughtsEl.remove();
-  }
-  let toolLog = div.querySelector(":scope > .tool-log");
-  if (state.activity) {
-    if (!toolLog) {
-      toolLog = document.createElement("div");
-      toolLog.className = "tool-log";
-      div.insertBefore(toolLog, answerEl);
-    }
-    toolLog.textContent = state.activity;
-  } else if (toolLog) {
-    toolLog.remove();
-  }
-  if (!state.answer && !state.final) {
-    answerEl.innerHTML =
-      '<span class="thinking"><span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span></span>';
-    return;
-  }
-  if (useMarkdown && state.answer) {
-    answerEl.innerHTML = simpleMarkdown(state.answer);
-    addCopyButtonsToCodeBlocks(div);
+    details.firstChild.textContent = tr(state.final ? 'thoughts_label' : 'thinking_label');
+    details.lastChild.textContent = thinking;
   } else {
-    answerEl.textContent = state.answer || "";
+    details?.remove();
   }
+  const answer = div.querySelector(':scope > .answer-text');
+  if (state.final && markdownHighlightEnabled && state.answer) answer.innerHTML = renderMarkdown(state.answer);
+  else if (!state.final && !state.answer) answer.innerHTML = '<span class="thinking"><span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span></span>';
+  else answer.textContent = state.answer || '';
 }
 
-// --- Markdown парсер без сторонних библиотек ---
-function simpleMarkdown(text) {
-  return renderMarkdown(text);
-}
-
-function escapeHtml(str) {
-  return String(str).replace(
-    /[&<>"']/g,
-    (tag) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-      })[tag],
-  );
-}
-
-function addCopyButtonsToCodeBlocks() {}
-
-function addMessage(text, sender, isMarkdown = false, saveToChat = true) {
-  const div = document.createElement("div");
-  div.className = "message " + sender;
-  div.style.fontSize = chatFontSize + "px";
-  if (isMarkdown && markdownHighlightEnabled) {
-    let html = simpleMarkdown(text);
-    div.innerHTML = html;
-  } else if (isMarkdown) {
-    div.innerHTML = escapeHtml(text).replace(/\n/g, "<br>");
+function addMessageNode(list, task, message, live) {
+  const ai = message.sender === 'ai';
+  const article = makeElement('article', 'message ' + (ai ? 'ai' : 'user'));
+  article.style.fontSize = chatFontSize + 'px';
+  const meta = makeElement('div', 'message-meta');
+  const token = makeElement('span', 'message-token ' + (ai ? 'agent' : 'person'));
+  token.innerHTML = icon(ai ? 'terminal' : 'layers');
+  meta.append(token, makeElement('strong', '', ai ? PROVIDERS[task.provider] : tr('you_label')));
+  if (ai && task.model && task.model !== 'default') meta.append(makeElement('span', 'message-model', task.model));
+  const body = makeElement('div', 'message-body');
+  article.append(meta, body);
+  list.append(article);
+  if (ai) {
+    body.append(makeElement('div', 'answer-text'));
+    const raw = String(message.text || '');
+    const legacy = raw.match(/^\*\*Мысли:\*\*\n([\s\S]*?)\n\n([\s\S]*)$/);
+    const content = legacy ? { thinking: legacy[1], answer: legacy[2] } : splitThoughts(raw, '');
+    renderAiMessage(body, live || { ...content, final: true });
+    if (live) body.id = 'live-message';
   } else {
-    div.textContent = text;
-  }
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-
-  // Сохраняем сообщение в текущий чат
-  if (saveToChat && chats.length > 0) {
-    chats[currentChatIndex].messages.push({
-      text: text,
-      sender: sender,
-      isMarkdown: isMarkdown,
-      timestamp: Date.now(),
-    });
-    saveChats();
+    body.textContent = message.text || '';
   }
 }
 
-async function loadModels() {
-  let models = [];
+function renderMessages(scroll = false) {
+  const task = currentTask();
+  const run = runs.get(task.id);
+  const list = $('message-list');
+  list.replaceChildren();
+  $('task-starter').hidden = !!task.messages.length;
+  for (const message of task.messages) addMessageNode(list, task, message);
+  if (run && task.messages.length) addMessageNode(list, task, { sender: 'ai' }, run);
+  if (task.error) list.append(makeElement('div', 'message-error', task.error));
+  if (scroll) chat.scrollTop = chat.scrollHeight;
+}
+
+function renderInspector(refresh = false) {
+  const task = currentTask();
+  const project = taskProject(task);
+  const run = runs.get(task.id);
+  const root = taskRoot(task);
+  $('project-panel').hidden = !inspectorOpen;
+  $('toggle-inspector').setAttribute('aria-expanded', String(inspectorOpen));
+  for (const button of document.querySelectorAll('.inspector-tab')) {
+    const selected = button.dataset.view === inspectorView;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+    $('inspector-' + button.dataset.view).hidden = !selected;
+  }
+  const status = task.status || 'idle';
+  $('run-status-icon').className = 'run-status-icon ' + status;
+  $('run-status-icon').innerHTML = icon(status === 'done' ? 'check' : 'activity');
+  $('run-status-title').textContent = statusName(task);
+  $('run-status-detail').textContent = tr('detail_' + status);
+  $('run-agent').textContent = PROVIDERS[task.provider];
+  $('run-model').textContent = task.model === 'default' ? tr('default_model') : task.model || tr('no_value');
+  $('run-branch').textContent = task.worktree?.branch || (task.mode === 'worktree' && project ? tr('new_worktree_label') : project?.branch) || tr('no_value');
+  $('project-path').hidden = !root;
+  $('project-path').textContent = root;
+  $('project-path').title = root;
+  $('reveal-project').hidden = !root;
+  $('fork-task').hidden = !!run || !task.messages.some((message) => message.sender === 'ai');
+  renderActivity(task, run);
+  if (!refresh || !inspectorOpen) return;
+  if (inspectorView === 'files') renderFiles(task);
+  if (inspectorView === 'changes') renderChanges(task);
+}
+
+function renderActivity(task, run) {
+  const host = $('run-activity');
+  const activity = run?.activity ? [...task.activity, ...run.activity.split('\n').filter(Boolean)] : task.activity;
+  const entries = activity.slice(-15);
+  const signature = JSON.stringify(entries) + currentLang;
+  if (host.dataset.signature === signature) return;
+  host.dataset.signature = signature;
+  host.replaceChildren();
+  if (!entries.length) host.append(makeElement('p', 'empty-activity', tr('no_activity')));
+  else for (const entry of entries) {
+    const item = makeElement('div', 'activity-item');
+    item.append(makeElement('span', 'timeline-dot'), makeElement('span', '', entry));
+    host.append(item);
+  }
+}
+
+function showInspectorMessage(host, text) {
+  host.replaceChildren(makeElement('p', 'inspector-empty', text));
+}
+
+function renderFiles(task) {
+  const root = taskRoot(task);
+  const host = $('project-tree');
+  const token = ++inspectorRequest;
+  if (!root) { showInspectorMessage(host, tr('files_empty')); return; }
+  showInspectorMessage(host, tr('loading_label'));
+  loadDirectory(root, '.', host, token);
+}
+
+async function loadDirectory(root, relative, host, token) {
   try {
-    models = await window.electronAPI.getModels();
-  } catch {
-    models = [];
-  }
-  const previous =
-    modelSelect.value ||
-    appSettings.lastModel ||
-    appSettings.codexModel ||
-    appSettings.claudeModel ||
-    "";
-  modelSelect.innerHTML = "";
-  (models || []).forEach((name) => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    modelSelect.appendChild(opt);
-  });
-  if (
-    previous &&
-    [...modelSelect.options].some((opt) => opt.value === previous)
-  ) {
-    modelSelect.value = previous;
-  }
-  if (!modelSelect.options.length) {
-    const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = currentLang === "ru" ? "Нет моделей" : "No models";
-    modelSelect.appendChild(opt);
+    const entries = await api.listProject(root, relative);
+    if (token !== inspectorRequest || !host.isConnected) return;
+    if (!Array.isArray(entries)) throw new Error(entries?.error || tr('files_empty'));
+    host.replaceChildren();
+    if (!entries.length) showInspectorMessage(host, tr('folder_empty'));
+    for (const entry of entries) {
+      const row = makeElement('button', 'tree-item');
+      row.type = 'button';
+      row.title = entry.path;
+      row.innerHTML = icon(entry.type === 'dir' ? 'folder' : 'file');
+      row.append(makeElement('span', 'tree-name', entry.name));
+      host.append(row);
+      if (entry.type === 'dir') {
+        const child = makeElement('div', 'tree-children');
+        child.hidden = true;
+        row.setAttribute('aria-expanded', 'false');
+        row.onclick = () => {
+          child.hidden = !child.hidden;
+          row.setAttribute('aria-expanded', String(!child.hidden));
+          if (!child.hidden && !child.childElementCount) loadDirectory(root, entry.path, child, token);
+        };
+        host.append(child);
+      } else {
+        row.onclick = () => {
+          if (input.disabled) return;
+          input.value += (input.value && !/\s$/.test(input.value) ? ' ' : '') + entry.path;
+          recordDraft();
+          input.focus();
+        };
+      }
+    }
+  } catch (error) {
+    if (token === inspectorRequest) showInspectorMessage(host, error.message);
   }
 }
 
-function projectPrompt() {
-  return currentLang === "ru"
-    ? 'Ты агент Fllama внутри открытой папки проекта. Можно смотреть и менять только её файлы и открывать обычные http/https страницы. Инструменты: list_dir, read_file, write_file, delete_path, search, fetch_url. Если отдельные вызовы недоступны, напиши ровно один блок <tool>{"name":"read_file","arguments":{"path":"относительный/путь"}}</tool> и дождись результата. Итоговый ответ пиши обычным текстом, без этого блока.'
-    : 'You are the Fllama agent inside the open project folder. You may change only files in that folder and open normal http/https pages. Tools: list_dir, read_file, write_file, delete_path, search, fetch_url. If native tool calls are unavailable, emit exactly one block <tool>{"name":"read_file","arguments":{"path":"relative/path"}}</tool> and wait for the result. Write the final answer as normal text, without that block.';
-}
-
-function agentPrompt() {
-  return currentLang === "ru"
-    ? "Ты Fllama, локальный ИИ-агент. Скрытые рассуждения оставляй в канале мыслей, а итоговый ответ пиши отдельно на языке пользователя. Давай конкретные шаги и код. Не прячь окончательный ответ внутри мыслей."
-    : "You are Fllama, a local AI agent. Keep private reasoning in the thinking channel and write the final answer separately, in the user's language. Prefer concrete steps and code. Do not hide the final answer inside thoughts.";
-}
-
-function buildMessages() {
-  const messages = [];
-  if (workspace === "project" && currentProvider !== "opencode")
-    messages.push({ role: "system", content: projectPrompt() });
-  else if (agentMode && workspace === "chat")
-    messages.push({ role: "system", content: agentPrompt() });
-  const saved = (chats[currentChatIndex]?.messages || []).slice(-16);
-  for (const msg of saved) {
-    const raw = String(msg.text || "");
-    const content = (
-      msg.sender === "ai" ? splitThoughts(raw, "").answer : raw
-    ).trim();
-    if (!content) continue;
-    messages.push({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: content.slice(-8000),
-    });
+async function renderChanges(task) {
+  const root = taskRoot(task);
+  const list = $('changed-files');
+  const summary = $('changes-summary');
+  const token = ++inspectorRequest;
+  summary.textContent = tr('changes_label');
+  $('change-count').hidden = true;
+  if (!taskProject(task)?.git) { showInspectorMessage(list, tr('changes_unavailable')); return; }
+  if (task.mode === 'worktree' && !task.worktree) { showInspectorMessage(list, tr('changes_pending')); return; }
+  showInspectorMessage(list, tr('loading_label'));
+  try {
+    const files = await api.listChanges(root, task.worktree?.base);
+    if (token !== inspectorRequest || task !== currentTask()) return;
+    list.replaceChildren();
+    if (!files.length) { showInspectorMessage(list, tr('changes_empty')); return; }
+    $('change-count').textContent = files.length;
+    $('change-count').hidden = false;
+    summary.textContent = tr('files_changed').replace('{count}', files.length);
+    for (const file of files) {
+      const row = makeElement('button', 'change-file');
+      row.type = 'button';
+      row.title = file.path;
+      row.append(makeElement('span', 'change-kind status-' + (file.status === '?' ? 'untracked' : file.status), file.status), makeElement('span', 'tree-name', file.path));
+      row.onclick = () => showDiff(task, file);
+      list.append(row);
+    }
+  } catch (error) {
+    if (token === inspectorRequest) showInspectorMessage(list, error.message);
   }
-  return messages;
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (activeRequestId) return;
-  const userMsg = input.value.trim();
-  if (!userMsg) return;
-  const model = modelSelect.value;
-  if (
-    workspace === "project" &&
-    !(chats[currentChatIndex] && chats[currentChatIndex].path)
-  ) {
-    openProject();
+let diffRequest = 0;
+async function showDiff(task, file) {
+  const sequence = ++diffRequest;
+  const dialog = $('diff-dialog');
+  const patch = $('inline-diff');
+  $('diff-title').textContent = file.path;
+  patch.textContent = tr('loading_label');
+  if (!dialog.open) dialog.showModal();
+  try {
+    const text = await api.readDiff(taskRoot(task), task.worktree?.base, file.path, file.status === '?');
+    if (sequence !== diffRequest || !dialog.open) return;
+    if (!text) { patch.textContent = tr('changes_empty'); return; }
+    const lines = document.createDocumentFragment();
+    for (const line of text.split('\n')) {
+      const style = line.startsWith('+') ? 'added' : line.startsWith('-') ? 'removed' : line.startsWith('@@') ? 'hunk' : '';
+      lines.append(makeElement('span', style, line + '\n'));
+    }
+    patch.replaceChildren(lines);
+  } catch (error) {
+    if (sequence === diffRequest) patch.textContent = error.message;
+  }
+}
+
+function setModelOptions(models, loading = false) {
+  const task = currentTask();
+  const choices = [...new Set([task.model, ...models].filter(Boolean))];
+  modelSelect.replaceChildren();
+  if (!choices.length) modelSelect.append(new Option(tr(loading ? 'loading_label' : 'models_none'), ''));
+  for (const model of choices) modelSelect.append(new Option(model === 'default' ? tr('default_model') : model, model));
+  modelSelect.append(new Option(tr('custom_model') + '…', CUSTOM_MODEL));
+  if (!task.model && choices.length) {
+    task.model = choices.includes(lastModel.get(task.provider)) ? lastModel.get(task.provider) : choices[0];
+    saveWorkspace();
+  }
+  modelSelect.value = task.model;
+  renderComposer();
+  renderInspector();
+}
+
+async function loadModels(force = false) {
+  if (!settingsReady) return;
+  const task = currentTask();
+  const provider = task.provider;
+  const serial = ++modelRequest;
+  const cached = modelCache.get(provider);
+  if (cached && !force) { setModelOptions(cached); return; }
+  setModelOptions(cached || [], true);
+  try {
+    const [models, cli] = await Promise.all([
+      api.getModels(provider),
+      Object.hasOwn(CLI_AGENTS, provider) ? api.cliAvailable(provider) : Promise.resolve(undefined),
+    ]);
+    if (cli !== undefined) providerChecks.set(provider, cli);
+    const options = provider === 'opencode' ? ['default', ...models] : models;
+    if (options.length) modelCache.set(provider, options);
+    if (serial !== modelRequest) return;
+    setModelOptions(options);
+  } catch (error) {
+    if (serial !== modelRequest) return;
+    setModelOptions(cached || []);
+    notice(error.message);
+  } finally {
+    renderBackendStatus();
+  }
+}
+
+function renderBackendStatus() {
+  const task = currentTask();
+  if (!task) return;
+  const provider = task.provider;
+  const element = $('backend-status');
+  const known = backendStatus?.provider === provider ? backendStatus : null;
+  let state = known?.state;
+  let detail = tr('provider_selected');
+  if (Object.hasOwn(CLI_AGENTS, provider) && providerChecks.has(provider)) {
+    const available = providerChecks.get(provider);
+    state = available ? 'ready' : 'error';
+    detail = tr(available ? 'cli_available' : 'cli_missing');
+  } else if (Object.hasOwn(COMPATIBLE, provider)) {
+    const preset = COMPATIBLE[provider];
+    const configuration = appSettings.compatible?.[provider];
+    const endpoint = preset.endpoint || configuration?.endpoint;
+    const available = !!endpoint && (preset.requiresKey === false || !!configuration?.apiKey);
+    state = available ? 'ready' : 'error';
+    detail = tr(!endpoint ? 'endpoint_missing' : !available ? 'api_missing' : configuration?.apiKey ? 'api_configured' : 'local_connection');
+  } else if (provider === 'codex' || provider === 'claude') {
+    const hasKey = !!appSettings[provider === 'codex' ? 'codexApiKey' : 'claudeApiKey'];
+    state = hasKey ? 'ready' : 'error';
+    detail = tr(hasKey ? 'api_configured' : 'api_missing');
+  } else if (known) {
+    detail = tr(known.state === 'ready' ? 'provider_ready' : known.state === 'starting' ? 'loading_label' : 'provider_offline');
+  }
+  element.textContent = PROVIDERS[provider] + ' · ' + detail;
+  element.title = known?.error || '';
+  element.className = state || '';
+}
+
+function recordDraft() {
+  currentTask().draft = input.value;
+  renderComposer();
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveWorkspace, 260);
+}
+
+function requestMessages(task) {
+  const project = taskProject(task);
+  const history = [];
+  if (project && !Object.hasOwn(CLI_AGENTS, task.provider) && task.provider !== 'opencode') {
+    history.push({ role: 'system', content: tr('project_prompt') });
+  } else if (!project && agentMode) {
+    history.push({ role: 'system', content: tr('agent_prompt') });
+  }
+  for (const message of task.messages.slice(-20)) {
+    const raw = String(message.text || '');
+    const content = (message.sender === 'ai' ? splitThoughts(raw, '').answer : raw).trim();
+    if (content) history.push({ role: message.sender === 'ai' ? 'assistant' : 'user', content });
+  }
+  return history;
+}
+
+async function runTask(event) {
+  event.preventDefault();
+  const task = currentTask();
+  const prompt = input.value.trim();
+  if (!prompt || !task.model || runs.has(task.id) || !settingsReady) return;
+  const project = taskProject(task);
+  if (!project && (task.provider === 'opencode' || CLI_AGENTS[task.provider]?.project)) {
+    notice(tr('agent_project_required').replace('{agent}', PROVIDERS[task.provider]));
     return;
   }
-  if (!model) {
-    addMessage(
-      currentLang === "ru" ? "Выберите модель." : "Choose a model.",
-      "ai",
-      false,
-      false,
-    );
+  if (providerChecks.get(task.provider) === false) {
+    notice(tr('cli_install_hint').replace('{command}', CLI_AGENTS[task.provider].binary));
     return;
   }
-  addMessage(userMsg, "user");
-  input.value = "";
-
-  const stopBtn = document.getElementById("stop-btn");
-  stopBtn.style.display = "";
-  streamStopped = false;
-  const requestId = Date.now() + "-" + Math.random().toString(16).slice(2);
-  activeRequestId = requestId;
-
-  const aiMessageDiv = document.createElement("div");
-  aiMessageDiv.className = "message ai";
-  aiMessageDiv.style.fontSize = chatFontSize + "px";
-  chat.appendChild(aiMessageDiv);
-  streamDiv = aiMessageDiv;
-  renderAiMessage(aiMessageDiv, {
-    thinking: "",
-    answer: "",
-    thinkingOpen: true,
-    final: false,
-  });
-  chat.scrollTop = chat.scrollHeight;
-
-  stopBtn.onclick = () => {
-    streamStopped = true;
-    window.electronAPI.abortRequest(requestId);
-    stopBtn.style.display = "none";
-  };
+  await persistChain;
+  if (currentTask() !== task || runs.has(task.id) || input.value.trim() !== prompt) return;
+  const run = { requestId: newId(), answer: '', thinking: '', activity: '', final: false, stopping: false };
+  runs.set(task.id, run);
+  task.error = '';
+  task.status = task.mode === 'worktree' && !task.worktree ? 'preparing' : 'running';
+  task.title ||= prompt.replace(/\s+/g, ' ').slice(0, 90);
+  task.draft = '';
+  input.value = '';
+  const userMessage = { sender: 'user', text: prompt };
+  task.messages.push(userMessage);
+  saveWorkspace();
+  renderWorkspace();
 
   try {
-    const result = await window.electronAPI.sendMessage({
-      requestId,
-      provider: currentProvider,
-      model,
-      messages: buildMessages(),
+    if (task.status === 'preparing') {
+      task.worktree = await api.createWorktree(project.root);
+      saveWorkspace();
+    }
+    if (run.stopping) {
+      task.status = 'stopped';
+      task.error = tr('detail_stopped');
+      return;
+    }
+    task.status = 'running';
+    if (currentTask() === task) renderWorkspace();
+    const result = await api.sendMessage({
+      requestId: run.requestId,
+      sessionKey: task.id,
+      provider: task.provider,
+      model: task.model,
+      workspace: project ? 'project' : 'chat',
+      projectPath: taskRoot(task),
+      messages: requestMessages(task),
       showThoughts,
-      workspace,
-      projectPath:
-        workspace === "project" ? chats[currentChatIndex].path || "" : "",
       lang: currentLang,
     });
-    let thinking = (result && result.thinking) || "";
-    let answer = (result && result.answer) || "";
-    const activity = (result && result.activity) || "";
-    const stopped = !!(result && result.aborted) || streamStopped;
-    const failed = !!(
-      result &&
-      result.error &&
-      !result.answer &&
-      !result.thinking
-    );
-    const placeholderOnly =
-      stopped && !(result && (result.answer || result.thinking));
-    if (failed) {
-      answer = (currentLang === "ru" ? "Ошибка: " : "Error: ") + result.error;
-    } else if (placeholderOnly) {
-      answer = currentLang === "ru" ? "Ответ остановлен." : "Response stopped.";
+    const answer = result.answer || run.answer;
+    const thinking = result.thinking || run.thinking;
+    if (answer || thinking) task.messages.push({ sender: 'ai', text: thinking ? `<think>${thinking}</think>\n${answer}` : answer });
+    const activity = result.activity || run.activity;
+    if (activity) task.activity.push(...activity.split('\n').filter(Boolean));
+    task.activity = task.activity.slice(-70);
+    task.status = result.aborted || run.stopping ? 'stopped' : result.error ? 'failed' : 'done';
+    task.error = result.error || (result.aborted ? tr('detail_stopped') : '');
+    if (!answer && !thinking && !result.error && !result.aborted && !run.stopping) {
+      task.status = 'failed';
+      task.error = tr('empty_answer');
     }
-    aiMessageDiv.dataset.done = "1";
-    pendingRender = null;
-    renderAiMessage(aiMessageDiv, { thinking, answer, activity, final: true });
-    if (workspace === "project") applyWorkspaceChrome();
-    if (!failed && !placeholderOnly && (answer || thinking) && chats.length) {
-      chats[currentChatIndex].messages.push({
-        text: thinking ? `<think>${thinking}</think>\n${answer}` : answer,
-        sender: "ai",
-        isMarkdown: true,
-        timestamp: Date.now(),
-      });
-      saveChats();
-    }
-  } catch (err) {
-    aiMessageDiv.dataset.done = "1";
-    pendingRender = null;
-    aiMessageDiv.textContent =
-      (currentLang === "ru" ? "Ошибка: " : "Error: ") + (err.message || err);
+  } catch (error) {
+    task.status = 'failed';
+    task.error = error.message;
   } finally {
-    if (activeRequestId === requestId) activeRequestId = null;
-    streamDiv = null;
-    streamStopped = false;
-    stopBtn.style.display = "none";
+    runs.delete(task.id);
+    if (task.status !== 'done' && task.messages.at(-1) === userMessage) {
+      task.messages.pop();
+      task.draft = prompt;
+    }
+    saveWorkspace();
+    if (currentTask() === task) {
+      input.value = task.draft;
+      renderWorkspace();
+    } else renderNavigation();
   }
-});
+}
+
+function bindWorkspace() {
+  $('new-task-btn').onclick = () => createTask();
+  $('open-project-btn').onclick = openProject;
+  $('task-search').oninput = (event) => {
+    search = event.target.value.trim().toLocaleLowerCase();
+    renderNavigation();
+  };
+  $('toggle-inspector').onclick = () => {
+    inspectorOpen = !inspectorOpen;
+    renderInspector(true);
+  };
+  for (const button of document.querySelectorAll('.inspector-tab')) {
+    button.onclick = () => {
+      inspectorView = button.dataset.view;
+      renderInspector(true);
+    };
+  }
+  $('refresh-changes').onclick = () => renderChanges(currentTask());
+  $('reload-models').onclick = () => loadModels(true);
+  $('close-diff').onclick = () => $('diff-dialog').close();
+  $('reveal-project').onclick = async () => {
+    try {
+      const error = await api.revealProject(taskRoot(currentTask()));
+      if (error) notice(error);
+    } catch (error) { notice(error.message); }
+  };
+  $('fork-task').onclick = () => {
+    const task = currentTask();
+    const prompt = [...task.messages].reverse().find((message) => message.sender === 'user')?.text || '';
+    const answer = splitThoughts([...task.messages].reverse().find((message) => message.sender === 'ai')?.text || '', '').answer;
+    const draft = `${tr('handoff_prompt')}\n\n${tr('handoff_task')}\n${prompt}\n\n${tr('handoff_result')}\n${answer}`;
+    createTask(taskProject(task), { draft, provider: task.provider, worktree: task.worktree });
+    providerSelect.focus();
+  };
+  for (const button of document.querySelectorAll('[data-recipe]')) {
+    button.onclick = () => {
+      input.value = tr('prompt_' + button.dataset.recipe);
+      recordDraft();
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    };
+  }
+  providerSelect.onchange = () => {
+    const task = currentTask();
+    task.provider = providerSelect.value;
+    task.model = '';
+    task.error = '';
+    saveWorkspace();
+    renderNavigation();
+    renderBackendStatus();
+    loadModels();
+  };
+  const selectModel = (value) => {
+    const task = currentTask();
+    task.model = value;
+    lastModel.set(task.provider, value);
+    saveWorkspace();
+    setModelOptions(modelCache.get(task.provider) || []);
+  };
+  const modelDialog = $('custom-model-dialog');
+  const modelInput = $('custom-model-input');
+  modelSelect.onchange = () => {
+    if (modelSelect.value !== CUSTOM_MODEL) {
+      selectModel(modelSelect.value);
+      return;
+    }
+    modelSelect.value = currentTask().model;
+    modelInput.value = currentTask().model === 'default' ? '' : currentTask().model;
+    modelDialog.showModal();
+    modelInput.focus();
+  };
+  $('close-custom-model').onclick = () => modelDialog.close();
+  $('custom-model-form').onsubmit = (event) => {
+    event.preventDefault();
+    const value = modelInput.value.trim();
+    if (!value || /[\u0000-\u001f]/.test(value) || value.startsWith('-')) return;
+    selectModel(value);
+    modelDialog.close();
+  };
+  isolationSelect.onchange = () => {
+    currentTask().mode = isolationSelect.value;
+    saveWorkspace();
+    renderComposer();
+    renderInspector(true);
+  };
+  $('stop-btn').onclick = () => {
+    const run = runs.get(currentTask().id);
+    if (!run) return;
+    run.stopping = true;
+    api.abortRequest(run.requestId);
+    renderComposer();
+  };
+  input.oninput = recordDraft;
+  form.onsubmit = runTask;
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!(event.metaKey || event.ctrlKey) || event.shiftKey) return;
+    if (event.key.toLowerCase() === 'n') { event.preventDefault(); createTask(); }
+    if (event.key.toLowerCase() === 'k') { event.preventDefault(); $('task-search').focus(); }
+  });
+  window.addEventListener('pagehide', saveWorkspace);
+  api.onStreamUpdate((delta) => {
+    const run = [...runs.values()].find((item) => item.requestId === delta.requestId);
+    if (!run || run.stopping) return;
+    Object.assign(run, delta);
+    if (runs.get(currentTask().id) !== run || renderScheduled) return;
+    renderScheduled = true;
+    requestAnimationFrame(() => {
+      renderScheduled = false;
+      const task = currentTask();
+      const currentRun = runs.get(task.id);
+      const node = $('live-message');
+      if (!currentRun || !node) return;
+      const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 120;
+      renderAiMessage(node, currentRun);
+      renderActivity(task, currentRun);
+      if (nearBottom) chat.scrollTop = chat.scrollHeight;
+    });
+  });
+}
 
 const i18n = {
   en: {
@@ -730,7 +968,7 @@ const i18n = {
     settings_port: "Порт",
     settings_agent_model: "Модель агента",
     settings_agent_model_hint:
-      "Эту модель получат Codex, Claude Code и другие клиенты. Пусто — брать имя модели из их запроса.",
+      "Эту модель получат Codex, Claude Code и другие клиенты. Пусто - брать имя модели из их запроса.",
     copy_agent_url: "Копировать URL",
     project_open: "Открыть папку",
     project_title: "Проект",
@@ -747,15 +985,271 @@ const i18n = {
 };
 let currentLang = "en";
 
+
+Object.assign(i18n.en, {
+  "local_connection": "Endpoint configured",
+  "no_value": "Unavailable",
+  "close": "Close",
+  "integrations_found": "found",
+  "integrations_missing": "not found",
+  "integrations_running": "running",
+  "integrations_stopped": "stopped",
+  "integrations_port": "Agent server on port {port}",
+  "integrations_off": "Agent server off",
+  "agent_no_key": "any value (no key set)",
+  "agent_clients": "LM Studio and other OpenAI clients",
+  "model_remove": "Delete model",
+  "model_remove_error": "Could not delete the model.",
+  "model_details_missing": "Description unavailable.",
+  "model_name": "Name",
+  "model_size": "Size",
+  "model_type": "Type",
+  "model_downloading": "Downloading…",
+  "model_downloaded": "Model downloaded.",
+  "model_download_error": "Download failed.",
+  "custom_model": "Enter model ID",
+  "model_id": "Model ID",
+  "use_model": "Use model",
+  "provider_settings": "Providers",
+  "provider_settings_hint": "Enter an API key to load the provider’s model list. If the server does not list models, enter the ID in the task composer.",
+  "endpoint_missing": "API base URL required",
+  "agent_project_required": "Open a project folder to use {agent}.",
+  "cli_install_hint": "Install {command} and make it available on PATH. Use Refresh models to check again.",
+  "local_models_group": "Local models",
+  "api_group": "API providers",
+  "cli_group": "Agents",
+  "project_website": "Project website",
+  "workspace_label": "Agent workspace",
+  "new_task": "New task",
+  "search_tasks": "Find a task",
+  "projects_label": "Projects",
+  "scratchpad": "Scratchpad",
+  "no_tasks": "No matching tasks",
+  "project_open": "Open project folder",
+  "no_runs": "No active runs",
+  "running_count": "{count} active",
+  "inspector_label": "Toggle task inspector",
+  "starter_title": "What are we working on?",
+  "starter_description": "Run a task with your agent of choice. Open a project to give it access to your code.",
+  "recipe_explore": "Explore a codebase",
+  "recipe_explore_detail": "Map the structure and entry points",
+  "recipe_build": "Implement a change",
+  "recipe_build_detail": "Turn a requirement into code",
+  "recipe_review": "Review code",
+  "recipe_review_detail": "Find bugs and missing tests",
+  "prompt_explore": "Explore this repository. Explain its architecture, key entry points, and how to run the project. Describe any gaps you find without modifying files.",
+  "prompt_build": "Implement the following change. Inspect the relevant code first, make the smallest complete change, and run the relevant checks.\n\nChange: ",
+  "prompt_review": "Review the code changes for bugs, regressions, and missing tests. List findings with file and line references. Do not modify files.",
+  "input_placeholder": "Describe a task for your agent…",
+  "send_btn": "Run task",
+  "stop_btn": "Stop",
+  "provider_label": "Agent",
+  "model_label": "Model",
+  "worktree_label": "Worktree",
+  "project_folder": "Project folder",
+  "send_shortcut": "Run",
+  "newline_shortcut": "New line",
+  "run_label": "Run",
+  "files_label": "Files",
+  "changes_label": "Changes",
+  "branch_label": "Branch",
+  "reveal_folder": "Reveal folder",
+  "fork_task": "Hand off to an agent",
+  "activity_label": "Activity",
+  "local_workspace": "Local workspace",
+  "models_title": "Ollama models",
+  "default_provider": "Default agent",
+  "default_model": "Agent default",
+  "status_idle": "Ready to run",
+  "status_preparing": "Creating worktree",
+  "status_running": "Agent running",
+  "status_done": "Run complete",
+  "status_stopped": "Run stopped",
+  "status_failed": "Run failed",
+  "detail_idle": "Activity will appear when you run this task.",
+  "detail_preparing": "Preparing an isolated checkout from HEAD.",
+  "detail_running": "You can switch tasks while the agent works.",
+  "detail_done": "The response is ready to review.",
+  "detail_stopped": "The run was stopped. Partial results may be available.",
+  "detail_failed": "See the error in the task.",
+  "run_interrupted": "The app closed before this run finished.",
+  "remove_task": "Delete task",
+  "remove_task_confirm": "Delete this task and its conversation?",
+  "remove_worktree_task": "Delete this task and its conversation? The Git worktree and branch will remain on disk.",
+  "new_worktree_hint": "Isolated checkout from the latest commit",
+  "new_worktree_label": "Created on first run",
+  "project_folder_hint": "Agent can edit the selected folder",
+  "scratchpad_hint": "No project folder",
+  "storage_error": "Task history could not be saved. Local storage may be full.",
+  "no_activity": "Tool activity will appear here.",
+  "files_empty": "Open a project to browse its files.",
+  "folder_empty": "This folder is empty.",
+  "loading_label": "Loading…",
+  "changes_unavailable": "Open a Git project to review changes.",
+  "changes_pending": "Run the task to create its worktree.",
+  "changes_empty": "No file changes.",
+  "files_changed": "Changed files ({count})",
+  "models_none": "No models",
+  "cli_available": "CLI installed",
+  "cli_missing": "CLI not found",
+  "api_configured": "API key configured",
+  "api_missing": "API key required",
+  "provider_selected": "Selected",
+  "provider_ready": "Ready",
+  "provider_offline": "Unavailable",
+  "you_label": "You",
+  "thoughts_label": "Thoughts",
+  "thinking_label": "Thinking…",
+  "opencode_folder": "Open a project folder to run OpenCode.",
+  "empty_answer": "The agent returned no answer.",
+  "project_prompt": "You are a coding agent working in the selected project folder. Use relative paths. Follow the user's instructions and summarize any changes and verification. If native tool calls are unavailable, emit one <tool>{\"name\":\"read_file\",\"arguments\":{\"path\":\"relative/path\"}}</tool> and wait for the result.",
+  "agent_prompt": "You are Fllama, an AI assistant. Answer in the user's language.",
+  "handoff_prompt": "Continue or review the work below. Verify the prior result against the files available in this task before relying on it.",
+  "handoff_task": "Previous task",
+  "handoff_result": "Previous agent response",
+  "about_desc": "A desktop workspace for running coding agents across projects."
+});
+
+Object.assign(i18n.ru, {
+  "local_connection": "Адрес API настроен",
+  "no_value": "Нет данных",
+  "close": "Закрыть",
+  "integrations_found": "найден",
+  "integrations_missing": "не найден",
+  "integrations_running": "запущен",
+  "integrations_stopped": "не запущен",
+  "integrations_port": "Сервер агента на порту {port}",
+  "integrations_off": "Сервер агента выключен",
+  "agent_no_key": "любое значение (ключ не задан)",
+  "agent_clients": "LM Studio и другие клиенты OpenAI",
+  "model_remove": "Удалить модель",
+  "model_remove_error": "Не удалось удалить модель.",
+  "model_details_missing": "Описание недоступно.",
+  "model_name": "Название",
+  "model_size": "Размер",
+  "model_type": "Тип",
+  "model_downloading": "Скачивается…",
+  "model_downloaded": "Модель скачана.",
+  "model_download_error": "Не удалось скачать модель.",
+  "custom_model": "Ввести ID модели",
+  "model_id": "ID модели",
+  "use_model": "Выбрать модель",
+  "provider_settings": "Провайдеры",
+  "provider_settings_hint": "Введите API-ключ, чтобы получить список моделей. Если сервер не возвращает список, укажите ID модели в задаче.",
+  "endpoint_missing": "Укажите базовый URL API",
+  "agent_project_required": "Откройте папку проекта для запуска {agent}.",
+  "cli_install_hint": "Установите {command} и добавьте его в PATH. Обновите список моделей для повторной проверки.",
+  "local_models_group": "Локальные модели",
+  "api_group": "API-провайдеры",
+  "cli_group": "Агенты",
+  "project_website": "Сайт проекта",
+  "workspace_label": "Рабочее пространство агентов",
+  "new_task": "Новая задача",
+  "search_tasks": "Найти задачу",
+  "projects_label": "Проекты",
+  "scratchpad": "Без проекта",
+  "no_tasks": "Задачи не найдены",
+  "project_open": "Открыть папку проекта",
+  "no_runs": "Нет активных запусков",
+  "running_count": "Активных запусков: {count}",
+  "inspector_label": "Показать или скрыть панель задачи",
+  "starter_title": "Над чем работаем?",
+  "starter_description": "Выберите агента и опишите задачу. Откройте проект, чтобы дать агенту доступ к коду.",
+  "recipe_explore": "Изучить проект",
+  "recipe_explore_detail": "Разобрать структуру и точки входа",
+  "recipe_build": "Внести изменение",
+  "recipe_build_detail": "Реализовать задачу в коде",
+  "recipe_review": "Проверить код",
+  "recipe_review_detail": "Найти ошибки и пропущенные тесты",
+  "prompt_explore": "Изучи репозиторий. Объясни архитектуру, основные точки входа и способ запуска проекта. Опиши найденные пробелы без изменения файлов.",
+  "prompt_build": "Внеси изменение ниже. Сначала изучи соответствующий код, затем реализуй задачу и запусти нужные проверки.\n\nИзменение: ",
+  "prompt_review": "Проверь изменения кода на ошибки, регрессии и пропущенные тесты. Укажи файлы и строки. Файлы не изменяй.",
+  "input_placeholder": "Опишите задачу для агента…",
+  "send_btn": "Запустить",
+  "stop_btn": "Остановить",
+  "provider_label": "Агент",
+  "model_label": "Модель",
+  "worktree_label": "Worktree",
+  "project_folder": "Папка проекта",
+  "send_shortcut": "Запуск",
+  "newline_shortcut": "Новая строка",
+  "run_label": "Запуск",
+  "files_label": "Файлы",
+  "changes_label": "Изменения",
+  "branch_label": "Ветка",
+  "reveal_folder": "Показать папку",
+  "fork_task": "Передать другому агенту",
+  "activity_label": "Действия",
+  "local_workspace": "Локальное пространство",
+  "models_title": "Модели Ollama",
+  "default_provider": "Агент по умолчанию",
+  "default_model": "По умолчанию",
+  "status_idle": "Готово к запуску",
+  "status_preparing": "Создаётся worktree",
+  "status_running": "Агент работает",
+  "status_done": "Запуск завершён",
+  "status_stopped": "Запуск остановлен",
+  "status_failed": "Ошибка запуска",
+  "detail_idle": "Здесь будут видны действия агента.",
+  "detail_preparing": "Создаётся отдельная рабочая копия из HEAD.",
+  "detail_running": "Пока агент работает, можно переключаться между задачами.",
+  "detail_done": "Ответ готов к проверке.",
+  "detail_stopped": "Запуск остановлен. Часть результатов может быть доступна.",
+  "detail_failed": "Подробности ошибки видны в задаче.",
+  "run_interrupted": "Приложение закрылось до конца запуска.",
+  "remove_task": "Удалить задачу",
+  "remove_task_confirm": "Удалить задачу и её переписку?",
+  "remove_worktree_task": "Удалить задачу и её переписку? Ветка и worktree останутся на диске.",
+  "new_worktree_hint": "Отдельная рабочая копия из последнего коммита",
+  "new_worktree_label": "Создаётся при запуске",
+  "project_folder_hint": "Агент может редактировать выбранную папку",
+  "scratchpad_hint": "Папка проекта не выбрана",
+  "storage_error": "Не удалось сохранить историю задач. Возможно, хранилище переполнено.",
+  "no_activity": "Здесь будут видны вызовы инструментов.",
+  "files_empty": "Откройте проект, чтобы просматривать файлы.",
+  "folder_empty": "Папка пуста.",
+  "loading_label": "Загрузка…",
+  "changes_unavailable": "Откройте Git-проект, чтобы просматривать изменения.",
+  "changes_pending": "Запустите задачу, чтобы создать worktree.",
+  "changes_empty": "Изменений в файлах нет.",
+  "files_changed": "Изменённые файлы ({count})",
+  "models_none": "Нет моделей",
+  "cli_available": "CLI установлен",
+  "cli_missing": "CLI не найден",
+  "api_configured": "API-ключ настроен",
+  "api_missing": "Нужен API-ключ",
+  "provider_selected": "Выбран",
+  "provider_ready": "Готов",
+  "provider_offline": "Недоступен",
+  "you_label": "Вы",
+  "thoughts_label": "Мысли",
+  "thinking_label": "Агент думает…",
+  "opencode_folder": "Откройте папку проекта для запуска OpenCode.",
+  "empty_answer": "Агент не вернул ответ.",
+  "project_prompt": "Ты агент разработки в выбранной папке проекта. Используй относительные пути. Следуй заданию пользователя и опиши изменения и проверки. Если прямой вызов инструментов недоступен, выведи один блок <tool>{\"name\":\"read_file\",\"arguments\":{\"path\":\"относительный/путь\"}}</tool> и дождись результата.",
+  "agent_prompt": "Ты Fllama, ИИ-помощник. Отвечай на языке пользователя.",
+  "handoff_prompt": "Продолжи или проверь работу ниже. Сверь предыдущий результат с файлами, доступными в этой задаче.",
+  "handoff_task": "Предыдущая задача",
+  "handoff_result": "Ответ предыдущего агента",
+  "about_desc": "Рабочее пространство для запуска ИИ-агентов в проектах."
+});
+
+Object.assign(i18n, globalThis.fllamaLocales);
+
 function applyI18n() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
-    if (i18n[currentLang][key]) el.innerHTML = i18n[currentLang][key];
+    el.innerHTML = tr(key);
   });
   document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
     const key = el.getAttribute("data-i18n-placeholder");
-    if (i18n[currentLang][key])
-      el.setAttribute("placeholder", i18n[currentLang][key]);
+    el.setAttribute("placeholder", tr(key));
+  });
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-group-label]').forEach((element) => { element.label = tr(element.dataset.groupLabel); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    el.title = tr(el.dataset.i18nTitle);
+    if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', el.title);
   });
   renderAgentHelp();
   const activePane = document.querySelector(".settings-nav-item.active");
@@ -764,12 +1258,16 @@ function applyI18n() {
 }
 
 function loadUiPrefs() {
+  const systemLocale = (navigator.languages || [navigator.language])
+    .map((language) => language?.split('-')[0].toLowerCase())
+    .find((locale) => Object.hasOwn(i18n, locale));
+  if (systemLocale) currentLang = systemLocale;
   try {
     const ui = JSON.parse(localStorage.getItem("fllama-ui") || "{}");
     if (typeof ui.markdown === "boolean")
       markdownHighlightEnabled = ui.markdown;
     if (ui.font) chatFontSize = parseInt(ui.font, 10) || chatFontSize;
-    if (ui.lang === "ru" || ui.lang === "en") currentLang = ui.lang;
+    if (Object.hasOwn(i18n, ui.lang)) currentLang = ui.lang;
   } catch {
     // ignore broken local prefs
   }
@@ -793,69 +1291,9 @@ function renderAgentHelp() {
   const port = portInput.value || "11435";
   const origin = "http://127.0.0.1:" + port;
   const key = (document.getElementById("agent-api-key").value || "").trim();
-  const keyText =
-    key ||
-    (currentLang === "ru" ? "любой (ключ не задан)" : "any value (no key set)");
+  const keyText = key || tr("agent_no_key");
   el.textContent =
-    currentLang === "ru"
-      ? `Codex, config.toml:\n  base_url = "${origin}/v1"\n  wire_api = "responses"\n\nClaude Code:\n  ANTHROPIC_BASE_URL=${origin}\n  ANTHROPIC_API_KEY=${keyText}\n\nLM Studio и другие OpenAI-клиенты:\n  ${origin}/v1`
-      : `Codex, config.toml:\n  base_url = "${origin}/v1"\n  wire_api = "responses"\n\nClaude Code:\n  ANTHROPIC_BASE_URL=${origin}\n  ANTHROPIC_API_KEY=${keyText}\n\nLM Studio and other OpenAI clients:\n  ${origin}/v1`;
-}
-
-function renderStatus(status) {
-  if (status && status.state) backendState = status.state;
-  const el = document.getElementById("backend-status");
-  if (!el) return;
-  const provider = (status && status.provider) || currentProvider;
-  const name =
-    {
-      ollama: "Ollama",
-      lmstudio: "LM Studio",
-      codex: "Codex",
-      claude: "Claude Code",
-      opencode: "OpenCode",
-    }[provider] || provider;
-  el.className =
-    backendState === "ready"
-      ? "ready"
-      : backendState === "starting"
-        ? "starting"
-        : "error";
-  if (backendState === "ready")
-    el.textContent = name + (currentLang === "ru" ? " готов" : " ready");
-  else if (backendState === "starting")
-    el.textContent =
-      (currentLang === "ru" ? "Запуск " : "Starting ") + name + "…";
-  else if (status && status.error === "no-key")
-    el.textContent =
-      currentLang === "ru" ? "Нужен API-ключ" : "API key required";
-  else if (status && status.error === "lmstudio-stopped")
-    el.textContent =
-      currentLang === "ru" ? "LM Studio не запущен" : "LM Studio is stopped";
-  else if (status && status.error === "opencode-stopped")
-    el.textContent =
-      currentLang === "ru" ? "OpenCode не запущен" : "OpenCode is stopped";
-  else if (
-    backendState === "stopped" ||
-    (status && status.error === "ollama-stopped")
-  )
-    el.textContent =
-      name + (currentLang === "ru" ? " не запущен" : " is stopped");
-  else {
-    const text = String((status && status.error) || "")
-      .replace(/\s+/g, " ")
-      .trim();
-    el.textContent = text
-      ? text.slice(0, 90)
-      : currentLang === "ru"
-        ? "Нет соединения"
-        : "Not connected";
-  }
-}
-
-function renderAgentBadge() {
-  const badge = document.getElementById("agent-badge");
-  if (badge) badge.style.display = agentMode ? "" : "none";
+    `Codex (config.toml):\n  base_url = "${origin}/v1"\n  wire_api = "responses"\n\nClaude Code:\n  ANTHROPIC_BASE_URL=${origin}\n  ANTHROPIC_API_KEY=${keyText}\n\n${tr("agent_clients")}:\n  ${origin}/v1`;
 }
 
 function setToggle(inputId, boxId, value) {
@@ -866,9 +1304,65 @@ function setToggle(inputId, boxId, value) {
   box.classList.toggle("checked", !!value);
 }
 
+function populateProviderControls() {
+  const models = { ...NATIVE_APIS, ...Object.fromEntries(Object.entries(COMPATIBLE).map(([id, item]) => [id, item.label])) };
+  const agents = { opencode: PROVIDERS.opencode, ...Object.fromEntries(Object.entries(CLI_AGENTS).map(([id, item]) => [id, item.label])) };
+  const groups = [['local_models_group', LOCAL_MODELS], ['api_group', models], ['cli_group', agents]];
+  providerSelect.replaceChildren();
+  $('default-provider-select').replaceChildren();
+  for (const [heading, entries] of groups) {
+    const group = document.createElement('optgroup');
+    group.label = tr(heading);
+    group.dataset.groupLabel = heading;
+    for (const [id, label] of Object.entries(entries)) group.append(new Option(label, id));
+    providerSelect.append(group);
+  }
+  for (const [id, label] of Object.entries({ ...LOCAL_MODELS, opencode: PROVIDERS.opencode, ...models })) {
+    $('default-provider-select').append(new Option(label, id));
+  }
+
+  const host = $('compatible-settings');
+  for (const [id, item] of Object.entries(COMPATIBLE)) {
+    const details = document.createElement('details');
+    details.className = 'provider-settings-entry';
+    const summary = document.createElement('summary');
+    summary.textContent = item.label;
+    details.append(summary);
+    const fields = [['apiKey', 'settings_api_key', 'password'], ['model', 'settings_model', 'text']];
+    if (!item.endpoint) fields.unshift(['endpoint', 'settings_base_url', 'url']);
+    for (const [key, label, type] of fields) {
+      const row = document.createElement('label');
+      row.className = 'settings-item';
+      const caption = document.createElement('span');
+      caption.className = 'settings-label';
+      caption.dataset.i18n = label;
+      const field = document.createElement('input');
+      field.className = 'settings-input';
+      field.dataset.compatible = id;
+      field.dataset.field = key;
+      field.type = type;
+      field.autocomplete = 'off';
+      field.spellcheck = false;
+      if (key === 'model') field.placeholder = item.models[0] || '';
+      if (key === 'endpoint') field.placeholder = 'http://127.0.0.1:8000/v1';
+      row.append(caption, field);
+      details.append(row);
+    }
+    host.append(details);
+  }
+}
+
+function collectCompatibleSettings() {
+  const compatible = {};
+  for (const field of document.querySelectorAll('[data-compatible]')) {
+    (compatible[field.dataset.compatible] ||= {})[field.dataset.field] = field.value.trim();
+  }
+  return compatible;
+}
+
 function collectSettingsFromForm() {
   return {
-    provider: document.getElementById("provider-select").value,
+    provider: document.getElementById("default-provider-select").value,
     ollamaUrl: document.getElementById("ollama-url").value.trim(),
     autoStartOllama: document.getElementById("toggle-autostart").checked,
     lmstudioUrl: document.getElementById("lmstudio-url").value.trim(),
@@ -890,16 +1384,20 @@ function collectSettingsFromForm() {
       parseInt(document.getElementById("agent-port").value, 10) || 11435,
     agentServerApiKey: document.getElementById("agent-api-key").value.trim(),
     agentModel: document.getElementById("agent-model").value.trim(),
-    lastModel: modelSelect.value || appSettings.lastModel || "",
+    lastModel: appSettings.lastModel || "",
+    compatible: collectCompatibleSettings(),
   };
 }
 
 function applySettingsToForm(settings) {
   appSettings = settings || {};
-  currentProvider = appSettings.provider || "ollama";
+  for (const field of document.querySelectorAll('[data-compatible]')) {
+    field.value = appSettings.compatible?.[field.dataset.compatible]?.[field.dataset.field] || '';
+  }
+
   showThoughts = appSettings.showThoughts !== false;
   agentMode = !!appSettings.agentMode;
-  document.getElementById("provider-select").value = currentProvider;
+  document.getElementById("default-provider-select").value = appSettings.provider || "ollama";
   document.getElementById("ollama-url").value =
     appSettings.ollamaUrl || "http://127.0.0.1:11434";
   document.getElementById("lmstudio-url").value =
@@ -942,7 +1440,6 @@ function applySettingsToForm(settings) {
     "toggle-opencode-autostart-checkbox",
     appSettings.autoStartOpenCode !== false,
   );
-  renderAgentBadge();
   renderAgentHelp();
 }
 
@@ -951,23 +1448,21 @@ async function refreshIntegration() {
   if (!el || !window.electronAPI.getIntegrationStatus) return;
   try {
     const info = await window.electronAPI.getIntegrationStatus();
-    const yes = currentLang === "ru" ? "найден" : "found";
-    const no = currentLang === "ru" ? "не найден" : "not found";
-    const on = currentLang === "ru" ? "запущен" : "running";
-    const off = currentLang === "ru" ? "не запущен" : "stopped";
+    const yes = tr("integrations_found");
+    const no = tr("integrations_missing");
+    const on = tr("integrations_running");
+    const off = tr("integrations_stopped");
     const agentLine =
       info.agent && info.agent.running
-        ? (currentLang === "ru" ? "Агент: порт " : "Agent: port ") +
-          info.agent.port
-        : (currentLang === "ru" ? "Агент: выключен" : "Agent: off") +
+        ? tr("integrations_port").replace("{port}", info.agent.port)
+        : tr("integrations_off") +
           (info.agent && info.agent.error ? " · " + info.agent.error : "");
     el.textContent = [
       "Ollama: " +
         (info.ollamaRunning ? on : off) +
         (info.ollamaBin ? " · " + info.ollamaBin : ""),
       "LM Studio: " + (info.lmstudioRunning ? on : off),
-      "Codex CLI: " + (info.codexBin ? yes : no),
-      "Claude Code: " + (info.claudeBin ? yes : no),
+      ...Object.keys(CLI_AGENTS).map((id) => PROVIDERS[id] + ": " + (info.cli?.[id] ? yes : no)),
       "OpenCode: " +
         (info.opencodeRunning ? on : off) +
         (info.opencodeBin ? " · " + info.opencodeBin : ""),
@@ -979,19 +1474,10 @@ async function refreshIntegration() {
 }
 
 function persistSettings() {
-  const prevProvider = currentProvider;
-  persistChain = persistChain
-    .then(async () => {
-      const patch = collectSettingsFromForm();
-      if (patch.agentServerEnabled && !patch.agentModel && modelSelect.value) {
-        patch.agentModel = modelSelect.value;
-        document.getElementById("agent-model").value = patch.agentModel;
-      }
+  const patch = collectSettingsFromForm();
+  persistChain = persistChain.then(async () => {
       showThoughts = patch.showThoughts;
       agentMode = patch.agentMode;
-      currentProvider = patch.provider;
-      appSettings = { ...appSettings, ...patch };
-      renderAgentBadge();
       renderAgentHelp();
       const result = await window.electronAPI.saveSettings(patch);
       if (result && result.settings) {
@@ -1015,12 +1501,13 @@ function persistSettings() {
             el.value = appSettings[key];
         });
       }
-      if (result && result.backend) renderStatus(result.backend);
-      if (patch.provider !== prevProvider) await loadModels();
-      if (!activeRequestId) updateChatDisplay();
+      if (result?.backend) backendStatus = result.backend;
+      renderBackendStatus();
+      loadModels(true);
+      renderMessages();
       refreshIntegration();
     })
-    .catch(() => {});
+    .catch((error) => notice(error.message));
   return persistChain;
 }
 
@@ -1028,15 +1515,8 @@ function bindSettingsForm() {
   if (settingsBound) return;
   settingsBound = true;
   const save = () => persistSettings();
-  document.getElementById("provider-select").addEventListener("change", save);
-  document.getElementById("model-select").addEventListener("change", () => {
-    const model = modelSelect.value;
-    if (currentProvider === "codex")
-      document.getElementById("codex-model").value = model;
-    if (currentProvider === "claude")
-      document.getElementById("claude-model").value = model;
-    save();
-  });
+  $('default-provider-select').addEventListener('change', save);
+  $('compatible-settings').addEventListener('change', save);
   [
     "ollama-url",
     "lmstudio-url",
@@ -1071,8 +1551,8 @@ function bindSettingsForm() {
       btn.disabled = true;
       try {
         const status = await window.electronAPI.restartOpenCode();
-        if (currentProvider === "opencode" && status) renderStatus(status);
-        await loadModels();
+        if (appSettings.provider === "opencode") backendStatus = status;
+        await loadModels(true);
         refreshIntegration();
       } finally {
         btn.disabled = false;
@@ -1085,8 +1565,8 @@ function bindSettingsForm() {
       btn.disabled = true;
       try {
         const status = await window.electronAPI.restartOllama();
-        if (currentProvider === "ollama" && status) renderStatus(status);
-        await loadModels();
+        if (appSettings.provider === "ollama") backendStatus = status;
+        await loadModels(true);
         refreshIntegration();
       } finally {
         btn.disabled = false;
@@ -1119,26 +1599,6 @@ function bindToggle(inputId, boxId, onChange) {
   });
 }
 
-async function initBackend() {
-  try {
-    applySettingsToForm(await window.electronAPI.getSettings());
-  } catch {
-    applySettingsToForm({});
-  }
-  bindSettingsForm();
-  try {
-    renderStatus(await window.electronAPI.getBackendStatus());
-  } catch {
-    renderStatus({ state: "starting", provider: currentProvider });
-  }
-  window.electronAPI.onBackendStatus((_event, status) => {
-    renderStatus(status);
-    if (status && status.state === "ready") loadModels();
-  });
-  await loadModels();
-  updateChatDisplay();
-  refreshIntegration();
-}
 
 const POPULAR_MODELS = [
   "tinyllama",
@@ -1163,9 +1623,9 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "TinyLlama",
-      desc: "TinyLlama — открытый проект по обучению компактной модели Llama с 1,1 млрд параметров на 3 триллионах токенов.",
+      desc: "TinyLlama - открытый проект по обучению компактной модели Llama с 1,1 млрд параметров на 3 триллионах токенов.",
       readme:
-        "TinyLlama — компактная модель всего с 1,1 млрд параметров. Благодаря своей компактности она подходит для множества задач, где важны ограниченные вычислительные ресурсы и память.",
+        "TinyLlama - компактная модель всего с 1,1 млрд параметров. Благодаря своей компактности она подходит для множества задач, где важны ограниченные вычислительные ресурсы и память.",
       variants: [{ name: "tinyllama:1.1b", size: "638MB", type: "base" }],
     },
   },
@@ -1182,9 +1642,9 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Llama 3.2",
-      desc: "Llama 3.2 от Meta — компактные модели на 1B и 3B параметров.",
+      desc: "Llama 3.2 от Meta - компактные модели на 1B и 3B параметров.",
       readme:
-        "Коллекция Meta Llama 3.2 — это многоязычные большие языковые модели (LLM), включающие предобученные и дообученные генеративные модели размером 1B и 3B параметров. Модели, дообученные для диалогов, оптимизированы для многоязычного общения, поиска и суммаризации. Они превосходят многие открытые и закрытые аналоги по отраслевым бенчмаркам.",
+        "Коллекция Meta Llama 3.2 - это многоязычные большие языковые модели (LLM), включающие предобученные и дообученные генеративные модели размером 1B и 3B параметров. Модели, дообученные для диалогов, оптимизированы для многоязычного общения, поиска и суммаризации. Они превосходят многие открытые и закрытые аналоги по отраслевым бенчмаркам.",
       variants: [
         { name: "llama3.2:1b", size: "1.3GB", type: "base" },
         { name: "llama3.2:3b", size: "2GB", type: "base" },
@@ -1201,9 +1661,9 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Llama 3.1",
-      desc: "Llama 3.1 — новая передовая модель от Meta, доступная в версиях на 8B, 70B и 405B параметров.",
+      desc: "Llama 3.1 - новая передовая модель от Meta, доступная в версиях на 8B, 70B и 405B параметров.",
       readme:
-        "Llama 3.1 405B — первая открытая модель, сопоставимая с лучшими ИИ по возможностям в области знаний, управляемости, математики, работы с инструментами и многоязычного перевода.",
+        "Llama 3.1 405B - первая открытая модель, сопоставимая с лучшими ИИ по возможностям в области знаний, управляемости, математики, работы с инструментами и многоязычного перевода.",
       variants: [{ name: "llama3.1:8b", size: "4.9GB", type: "base" }],
     },
   },
@@ -1222,9 +1682,9 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Qwen3",
-      desc: "Qwen3 — последнее поколение больших языковых моделей серии Qwen, включающее плотные и Mixture-of-Experts (MoE) варианты.",
+      desc: "Qwen3 - последнее поколение больших языковых моделей серии Qwen, включающее плотные и Mixture-of-Experts (MoE) варианты.",
       readme:
-        "Qwen 3 — это новое поколение больших языковых моделей Qwen, включающее как плотные, так и MoE-модели. Флагман Qwen3-235B-A22B показывает конкурентные результаты в задачах программирования, математики и общего ИИ, соперничая с DeepSeek-R1, o1, o3-mini, Grok-3 и Gemini-2.5-Pro. Даже компактные модели серии Qwen3 могут конкурировать с более крупными аналогами.",
+        "Qwen 3 - это новое поколение больших языковых моделей Qwen, включающее как плотные, так и MoE-модели. Флагман Qwen3-235B-A22B показывает конкурентные результаты в задачах программирования, математики и общего ИИ, соперничая с DeepSeek-R1, o1, o3-mini, Grok-3 и Gemini-2.5-Pro. Даже компактные модели серии Qwen3 могут конкурировать с более крупными аналогами.",
       variants: [
         { name: "qwen3:0.6b", size: "523MB", type: "base" },
         { name: "qwen3:1.7b", size: "1.4GB", type: "base" },
@@ -1238,7 +1698,7 @@ const MODEL_INFOS = {
       title: "Gemma 3",
       desc: "The current, most capable model that runs on a single GPU.",
       readme:
-        "Gemma is a lightweight, family of models from Google built on Gemini technology. The Gemma 3 models are multimodal—processing text and images—and feature a 128K context window with support for over 140 languages. Available in 1B, 4B, 12B, and 27B parameter sizes, they excel in tasks like question answering, summarization, and reasoning, while their compact design allows deployment on resource-limited devices.",
+        "Gemma is a lightweight, family of models from Google built on Gemini technology. The Gemma 3 models are multimodal-processing text and images-and feature a 128K context window with support for over 140 languages. Available in 1B, 4B, 12B, and 27B parameter sizes, they excel in tasks like question answering, summarization, and reasoning, while their compact design allows deployment on resource-limited devices.",
       variants: [
         { name: "gemma3:1b", size: "815MB", type: "base" },
         { name: "gemma3:4b", size: "3.3GB", type: "base" },
@@ -1247,9 +1707,9 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Gemma 3",
-      desc: "Gemma 3 — самая производительная модель, работающая на одной видеокарте.",
+      desc: "Gemma 3 - самая производительная модель, работающая на одной видеокарте.",
       readme:
-        "Gemma — семейство легковесных моделей от Google на базе технологий Gemini. Модели Gemma 3 являются мультимодальными (работают с текстом и изображениями), поддерживают контекст до 128К токенов и более 140 языков. Доступны варианты на 1B, 4B, 12B и 27B параметров. Отличаются высокой производительностью при компактных размерах, что позволяет запускать их даже на устройствах с ограниченными ресурсами.",
+        "Gemma - семейство легковесных моделей от Google на базе технологий Gemini. Модели Gemma 3 являются мультимодальными (работают с текстом и изображениями), поддерживают контекст до 128К токенов и более 140 языков. Доступны варианты на 1B, 4B, 12B и 27B параметров. Отличаются высокой производительностью при компактных размерах, что позволяет запускать их даже на устройствах с ограниченными ресурсами.",
       variants: [
         { name: "gemma3:1b", size: "815MB", type: "base" },
         { name: "gemma3:4b", size: "3.3GB", type: "base" },
@@ -1272,7 +1732,7 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "DeepSeek R1",
-      desc: "DeepSeek-R1 — семейство открытых моделей для рассуждений с производительностью, приближающейся к лидерам рынка.",
+      desc: "DeepSeek-R1 - семейство открытых моделей для рассуждений с производительностью, приближающейся к лидерам рынка.",
       readme:
         "DeepSeek-R1 недавно обновилась до версии DeepSeek-R1-0528 для дистиллированной модели на 8B параметров и полной модели на 671B. В этом обновлении значительно улучшены способности к рассуждению и выводу. Модель показывает отличные результаты в бенчмарках по математике, программированию и логике, приближаясь к таким лидерам, как O3 и Gemini 2.5 Pro.",
       variants: [
@@ -1296,7 +1756,7 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "DeepSeek Coder",
-      desc: "DeepSeek Coder — мощная модель для программирования, обученная на двух триллионах токенов кода и естественного языка.",
+      desc: "DeepSeek Coder - мощная модель для программирования, обученная на двух триллионах токенов кода и естественного языка.",
       readme:
         "DeepSeek Coder обучена с нуля на 87% кода и 13% текстов на английском и китайском языках. Каждая из моделей предварительно обучена на 2 триллионах токенов.",
       variants: [
@@ -1317,8 +1777,8 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Phi-3",
-      desc: "Phi-3 — семейство легковесных открытых моделей от Microsoft на 3B (Mini) и 14B (Medium) параметров.",
-      readme: "Phi-3 — семейство открытых ИИ-моделей, разработанных Microsoft.",
+      desc: "Phi-3 - семейство легковесных открытых моделей от Microsoft на 3B (Mini) и 14B (Medium) параметров.",
+      readme: "Phi-3 - семейство открытых ИИ-моделей, разработанных Microsoft.",
       variants: [
         { name: "phi3:mini", size: "2.2GB", type: "base" },
         { name: "phi3:medium", size: "7.9GB", type: "base" },
@@ -1341,7 +1801,7 @@ const MODEL_INFOS = {
     },
     ru: {
       title: "Qwen2.5 Coder",
-      desc: "Qwen2.5 Coder — новейшая серия моделей Qwen, специализированных для кода, с заметными улучшениями генерации, рассуждений и исправления кода.",
+      desc: "Qwen2.5 Coder - новейшая серия моделей Qwen, специализированных для кода, с заметными улучшениями генерации, рассуждений и исправления кода.",
       readme:
         "Серия моделей Qwen 2.5 Coder теперь доступна в 6 размерах: 0.5B, 1.5B, 3B, 7B, 14B и 32B. Существенно улучшены генерация, рассуждения и исправление кода. Модель на 32B по качеству сопоставима с OpenAI GPT-4o.",
       variants: [
@@ -1357,32 +1817,46 @@ const MODEL_INFOS = {
 
 window.addEventListener("DOMContentLoaded", async () => {
   loadUiPrefs();
+  document.body.classList.toggle('mac-window', new URLSearchParams(location.search).get('platform') === 'darwin');
+  const isMac = navigator.platform.toLowerCase().includes('mac');
+  document.querySelectorAll('[data-shortcut]').forEach((key) => {
+    key.textContent = (isMac ? '⌘ ' : 'Ctrl ') + key.dataset.shortcut;
+  });
+  document.querySelectorAll('[data-icon]').forEach((node) => { node.innerHTML = icon(node.dataset.icon); });
+  populateProviderControls();
   applyI18n();
-  loadChats();
-  bindStream();
-
-  document
-    .getElementById("mode-chat-btn")
-    .addEventListener("click", () => setWorkspace("chat"));
-  document
-    .getElementById("mode-project-btn")
-    .addEventListener("click", () => setWorkspace("project"));
-  document
-    .getElementById("open-project-btn")
-    .addEventListener("click", openProject);
-  document
-    .getElementById("project-empty-open")
-    .addEventListener("click", openProject);
-
-  document.getElementById("new-chat-btn").addEventListener("click", () => {
-    if (workspace === "project") openProject();
-    else createNewChat();
+  try {
+    applySettingsToForm(await api.getSettings());
+  } catch (error) {
+    applySettingsToForm({});
+    notice(error.message);
+  }
+  if (appSettings.lastModel && appSettings.provider) lastModel.set(appSettings.provider, appSettings.lastModel);
+  settingsReady = true;
+  bindSettingsForm();
+  loadWorkspace();
+  bindWorkspace();
+  selectTask(workspaceState.selected);
+  api.onBackendStatus((status) => {
+    backendStatus = status;
+    renderBackendStatus();
+    if (status?.state === 'ready' && status.provider === currentTask().provider) loadModels(true);
   });
-
-  document.getElementById("new-tab-btn").addEventListener("click", () => {
-    if (workspace === "project") openProject();
-    else createNewChat();
-  });
+  api.getBackendStatus().then((status) => {
+    backendStatus = status;
+    renderBackendStatus();
+    if (status?.state === 'ready' && status.provider === currentTask().provider && !currentTask().model) loadModels(true);
+  }).catch(() => {});
+  for (const project of workspaceState.projects) {
+    api.inspectProject(project.root).then((info) => {
+      applyProjectInfo(project, info);
+      saveWorkspace();
+      if (taskProject(currentTask()) === project) {
+        renderComposer();
+        renderInspector(true);
+      }
+    }).catch(() => {});
+  }
 
   // Модальное окно настроек
   const modal = document.getElementById("modal-settings");
@@ -1421,6 +1895,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (e.target === infoModal) hideInfo();
   });
 
+  $("about-website").onclick = () => api.openExternal("https://arduradiokot.github.io/Fllama/");
   document.getElementById("about-github").addEventListener("click", () => {
     window.electronAPI.openExternal("https://github.com/ArduRadioKot/Fllama");
   });
@@ -1476,7 +1951,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       markdownHighlightEnabled,
     );
     saveUiPrefs();
-    if (!activeRequestId) updateChatDisplay();
+    renderMessages();
   });
 
   toggleMarkdown.addEventListener("change", () => {
@@ -1486,7 +1961,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       markdownHighlightEnabled,
     );
     saveUiPrefs();
-    if (!activeRequestId) updateChatDisplay();
+    renderMessages();
   });
 
   // Настройки: font size
@@ -1507,13 +1982,14 @@ window.addEventListener("DOMContentLoaded", async () => {
     currentLang = langSelect.value;
     applyI18n();
     saveUiPrefs();
-    renderStatus({ state: backendState, provider: currentProvider });
+    renderWorkspace();
+    loadModels();
     document
       .getElementById("download-model-modal-btn")
-      .querySelector("span").textContent = i18n[currentLang].models_download;
+      .querySelector("span").textContent = tr("models_download");
     loadModelsList();
     renderPopularModels();
-    if (!activeRequestId) updateChatDisplay();
+    renderMessages();
   });
 
   // Модальное окно моделей
@@ -1529,13 +2005,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   const modelsAvailableList = document.getElementById("models-available-list");
 
   async function loadModelsList() {
-    modelsList.innerHTML = currentLang === "ru" ? "Загрузка..." : "Loading...";
-    const models = await window.electronAPI.getModels();
+    modelsList.innerHTML = tr("loading_label");
+    const models = await api.getModels("ollama");
     if (!models || !models.length) {
       modelsList.innerHTML =
-        currentLang === "ru"
-          ? "Нет установленных моделей."
-          : "No models installed.";
+        tr("models_no_models");
       return;
     }
     modelsList.innerHTML = models
@@ -1543,7 +2017,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         (m) => `
       <div class="models-list-item">
         <span class="model-icon"></span><span class="model-name">${escapeHtml(m)}</span>
-        <button class="delete-model-btn" type="button" title="${currentLang === "ru" ? "Удалить модель" : "Delete model"}" data-model="${escapeHtml(m)}">×</button>
+        <button class="delete-model-btn" type="button" title="${escapeHtml(tr("model_remove"))}" data-model="${escapeHtml(m)}">×</button>
       </div>
     `,
       )
@@ -1558,16 +2032,17 @@ window.addEventListener("DOMContentLoaded", async () => {
           const result = await window.electronAPI.deleteModel(model);
           if (result && result.success) {
             loadModelsList();
+            if (currentTask().provider === "ollama") loadModels(true);
           } else {
             alert(
               (result && result.error) ||
-                (currentLang === "ru" ? "Ошибка удаления." : "Delete error."),
+                (tr("model_remove_error")),
             );
             btn.disabled = false;
             btn.textContent = "×";
           }
         } catch (e) {
-          alert(currentLang === "ru" ? "Ошибка удаления." : "Delete error.");
+          alert(tr("model_remove_error"));
           btn.disabled = false;
           btn.textContent = "×";
         }
@@ -1593,20 +2068,17 @@ window.addEventListener("DOMContentLoaded", async () => {
           document.getElementById("model-info-readme").textContent = "";
           document.getElementById("model-info-variants").innerHTML = "";
           // Заполняем
-          const title = info ? info[currentLang].title : model;
-          const desc = info
-            ? info[currentLang].desc
-            : currentLang === "ru"
-              ? "Нет описания."
-              : "No info.";
-          const readme = info ? info[currentLang].readme : "";
-          const variants = info ? info[currentLang].variants || [] : [];
+          const details = info?.[currentLang] || info?.en;
+          const title = details?.title || model;
+          const desc = details?.desc || tr("model_details_missing");
+          const readme = details?.readme || "";
+          const variants = details?.variants || [];
           document.getElementById("model-info-title").textContent = title;
           document.getElementById("model-info-desc").textContent = desc;
           document.getElementById("model-info-readme").textContent = readme;
           if (variants.length) {
             let table =
-              '<table id="model-info-variants-table"><tr><th>Name</th><th>Size</th><th>Type</th></tr>';
+              '<table id="model-info-variants-table"><tr>' + ['model_name', 'model_size', 'model_type'].map((key) => '<th>' + escapeHtml(tr(key)) + '</th>').join('') + '</tr>';
             for (const v of variants) {
               table += `<tr><td>${v.name}</td><td>${v.size}</td><td>${v.type}</td></tr>`;
             }
@@ -1634,28 +2106,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     const model = downloadModelInput.value.trim();
     if (!model) return;
     downloadModelModalBtn.disabled = true;
-    downloadModelModalBtn.textContent =
-      currentLang === "ru" ? "Скачивание..." : "Downloading...";
+    const label = downloadModelModalBtn.querySelector("span");
+    label.textContent = tr("model_downloading");
     try {
       const result = await window.electronAPI.downloadModel(model);
       alert(
         result && result.success
-          ? currentLang === "ru"
-            ? "Модель успешно скачана!"
-            : "Model downloaded!"
+          ? tr("model_downloaded")
           : result && result.error
             ? result.error
-            : currentLang === "ru"
-              ? "Ошибка скачивания."
-              : "Download error.",
+            : tr("model_download_error"),
       );
       loadModelsList();
     } catch (e) {
-      alert(currentLang === "ru" ? "Ошибка скачивания." : "Download error.");
+      alert(tr("model_download_error"));
     }
     downloadModelModalBtn.disabled = false;
-    downloadModelModalBtn.textContent =
-      currentLang === "ru" ? "Скачать" : "Download";
+    label.textContent = tr("models_download");
+    if (currentTask().provider === "ollama") loadModels(true);
   });
 
   document.getElementById("close-model-info").onclick = () => {
@@ -1666,5 +2134,4 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("modal-model-info").style.display = "none";
   });
 
-  await initBackend();
 });
