@@ -42,13 +42,14 @@ async function inspectProject(root) {
   }
 }
 
-async function createWorktree(root, storage) {
+async function createWorktree(root, storage, baseCommit) {
   const project = await inspectProject(root);
   if (!project.git || path.relative(project.repo, project.root)) {
     throw new Error('Open the Git repository root to create a worktree.');
   }
-  const base = project.head;
+  const base = baseCommit || project.head;
   if (!base) throw new Error('Create a Git commit before creating a worktree.');
+  if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(base)) throw new Error('Invalid worktree base commit.');
   const id = randomUUID();
   const branch = 'fllama/' + id.slice(0, 12);
   const directory = path.join(storage, id);

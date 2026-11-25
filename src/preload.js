@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   pickProject: () => ipcRenderer.invoke('pick-project'),
   listProject: (root, path) => ipcRenderer.invoke('list-project', { root, path }),
   inspectProject: (root) => ipcRenderer.invoke('inspect-project', root),
-  createWorktree: (root) => ipcRenderer.invoke('create-worktree', root),
+  createWorktree: (root, base) => ipcRenderer.invoke('create-worktree', root, base),
   listChanges: (root, base) => ipcRenderer.invoke('list-changes', root, base),
   readDiff: (root, base, file, untracked) => ipcRenderer.invoke('read-diff', root, base, file, untracked),
   revealProject: (root) => ipcRenderer.invoke('reveal-project', root),

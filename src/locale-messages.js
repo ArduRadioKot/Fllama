@@ -165,7 +165,44 @@
     model_downloaded: ['Modell heruntergeladen.', 'Modelo descargado.'],
     model_download_error: ['Download fehlgeschlagen.', 'Error al descargar el modelo.'],
   };
-  globalThis.fllamaLocales = Object.fromEntries(['de', 'es'].map((locale, index) => [
-    locale, Object.fromEntries(Object.entries(translations).map(([key, texts]) => [key, texts[index]])),
+  const teamTranslations = {
+    task_tabs: ['Open tasks', 'Открытые задачи', 'Offene Aufgaben', 'Tareas abiertas'],
+    close_task_tab: ['Close tab', 'Закрыть вкладку', 'Tab schließen', 'Cerrar pestaña'],
+    team_mode: ['Team mode', 'Режим команды', 'Teammodus', 'Modo equipo'],
+    team_label: ['Team', 'Команда', 'Team', 'Equipo'],
+    branches_label: ['Branches', 'Ветки', 'Branches', 'Ramas'],
+    branches_empty: ['Worktrees for this project will appear here.', 'Здесь появятся worktree этого проекта.', 'Hier erscheinen die Worktrees des Projekts.', 'Aquí aparecen los worktrees del proyecto.'],
+    team_description: [
+      'The selected agent plans the work, delegates to this team, and summarizes the results. Subtasks run in parallel in separate Git worktrees.',
+      'Выбранный агент планирует работу, раздаёт подзадачи этой команде и готовит итог. Подзадачи идут параллельно в отдельных Git worktree.',
+      'Der ausgewählte Agent plant, delegiert Aufgaben und fasst Ergebnisse zusammen. Teilaufgaben laufen parallel in separaten Git-Worktrees.',
+      'El agente seleccionado planifica, delega en este equipo y resume los resultados. Las subtareas se ejecutan en paralelo en worktrees de Git separados.',
+    ],
+    team_disable: ['Use a single agent', 'Вернуться к одному агенту', 'Einzelnen Agenten verwenden', 'Usar un solo agente'],
+    team_apply: ['Use this team', 'Использовать команду', 'Team verwenden', 'Usar este equipo'],
+    team_worker: ['Worker {number}', 'Агент {number}', 'Agent {number}', 'Agente {number}'],
+    team_unused: ['No agent', 'Без агента', 'Kein Agent', 'Sin agente'],
+    team_model: ['Model ID (optional)', 'ID модели (необязательно)', 'Modell-ID (optional)', 'ID del modelo (opcional)'],
+    team_lead: ['Coordinator', 'Координатор', 'Koordinator', 'Coordinador'],
+    team_lead_removed: ['The coordinator task was removed.', 'Задача координатора удалена.', 'Die Koordinatoraufgabe wurde entfernt.', 'La tarea del coordinador se eliminó.'],
+    team_empty: ['Enable Team mode to delegate this task.', 'Включите режим команды, чтобы делегировать задачу.', 'Aktiviere den Teammodus, um diese Aufgabe zu delegieren.', 'Activa el modo equipo para delegar esta tarea.'],
+    team_git_required: ['Open a Git repository with a commit to use Team mode.', 'Для режима команды откройте корень Git-репозитория с коммитом.', 'Öffne ein Git-Repository mit mindestens einem Commit für den Teammodus.', 'Abre un repositorio Git con un commit para usar el modo equipo.'],
+    team_invalid_model: ['Enter a valid model ID.', 'Введите допустимый ID модели.', 'Gib eine gültige Modell-ID ein.', 'Introduce un ID de modelo válido.'],
+    team_select_worker: ['Select at least one worker.', 'Выберите хотя бы одного агента.', 'Wähle mindestens einen Agenten.', 'Selecciona al menos un agente.'],
+    team_no_model: ['No model is available for {agent}. Set a model ID in Team mode.', 'У {agent} нет доступных моделей. Укажите ID модели в режиме команды.', 'Für {agent} ist kein Modell verfügbar. Gib im Teammodus eine Modell-ID an.', 'No hay modelos disponibles para {agent}. Indica un ID de modelo en el modo equipo.'],
+    team_invalid_plan: ['The coordinator returned an invalid plan. Try again or change the coordinator model.', 'Координатор вернул некорректный план. Повторите запуск или смените модель.', 'Der Koordinator hat einen ungültigen Plan geliefert. Starte erneut oder wechsle das Modell.', 'El coordinador devolvió un plan no válido. Reintenta o cambia su modelo.'],
+    team_planning: ['Planning subtasks', 'Разбивка на подзадачи', 'Teilaufgaben planen', 'Planificando subtareas'],
+    team_delegating: ['Running subtasks', 'Выполнение подзадач', 'Teilaufgaben laufen', 'Ejecutando subtareas'],
+    team_summarizing: ['Summarizing results', 'Подготовка итога', 'Ergebnisse zusammenfassen', 'Resumiendo resultados'],
+    team_complete: ['Team run complete', 'Команда завершила работу', 'Teamlauf abgeschlossen', 'Ejecución del equipo completa'],
+    team_partial: ['Finished with issues', 'Часть подзадач не выполнена', 'Mit Problemen abgeschlossen', 'Finalizado con incidencias'],
+    team_failed: ['Team run failed', 'Ошибка запуска команды', 'Teamlauf fehlgeschlagen', 'Falló la ejecución del equipo'],
+    team_stopped: ['Team run stopped', 'Запуск команды остановлен', 'Teamlauf gestoppt', 'Ejecución del equipo detenida'],
+  };
+  globalThis.fllamaLocales = Object.fromEntries(['en', 'ru', 'de', 'es'].map((locale, index) => [
+    locale, {
+      ...Object.fromEntries(Object.entries(teamTranslations).map(([key, texts]) => [key, texts[index]])),
+      ...(index >= 2 ? Object.fromEntries(Object.entries(translations).map(([key, texts]) => [key, texts[index - 2]])) : {}),
+    },
   ]));
 })();

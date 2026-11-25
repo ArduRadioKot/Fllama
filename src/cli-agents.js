@@ -6,10 +6,10 @@ const { cli } = require('./provider-catalog');
 const os = require('node:os');
 const { stripVTControlCharacters } = require('node:util');
 
-function invocation(provider, model, prompt, directory) {
+function invocation(provider, model, prompt, canEdit) {
   const args = {
-    'codex-cli': ['--ask-for-approval', 'never', 'exec', '--json', '--skip-git-repo-check', '--sandbox', directory ? 'workspace-write' : 'read-only'],
-    'claude-cli': ['--print', '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--permission-mode', directory ? 'acceptEdits' : 'plan'],
+    'codex-cli': ['--ask-for-approval', 'never', 'exec', '--json', '--skip-git-repo-check', '--sandbox', canEdit ? 'workspace-write' : 'read-only'],
+    'claude-cli': ['--print', '--output-format', 'stream-json', '--verbose', '--include-partial-messages', '--permission-mode', canEdit ? 'acceptEdits' : 'plan'],
     'kiro-cli': ['chat', '--no-interactive'],
     'hermes-cli': ['chat', '--quiet', '--query-file', '-'],
     'cline-cli': ['--json', '--auto-approve', 'false'],
@@ -34,7 +34,7 @@ function cliCommand(provider) {
   return executable && !/\.(cmd|bat)$/i.test(executable) ? executable : null;
 }
 
-function streamCli({ provider, model, messages, directory, signal, onDelta }) {
+function streamCli({ provider, model, messages, directory, readOnly, signal, onDelta }) {
   const binary = Object.hasOwn(cli, provider) ? cli[provider].binary : '';
   const executable = cliCommand(provider);
   if (!executable) throw new Error(`Install the ${binary} CLI and make its executable available on PATH.`);
@@ -43,7 +43,7 @@ function streamCli({ provider, model, messages, directory, signal, onDelta }) {
   if (cli[provider].project && !directory) throw new Error('Open a project folder to use ' + cli[provider].label + '.');
   const prompt = messages.length === 1 ? messages[0].content
     : messages.map(({ role, content }) => `[${role}]\n${content}`).join('\n\n');
-  const { args, stdin } = invocation(provider, model, prompt, directory);
+  const { args, stdin } = invocation(provider, model, prompt, !!directory && !readOnly);
   const textOutput = ['kiro-cli', 'hermes-cli', 'roo-cli'].includes(provider);
 
   return new Promise((resolve, reject) => {

@@ -51,6 +51,7 @@
       "cli-agents.js",
       "provider-catalog.js",
       "locale-messages.js",
+      "team-plan.js",
       "fllama.png",
       "git-workspace.js",
       "index.html",

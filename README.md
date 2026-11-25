@@ -43,6 +43,12 @@ The interface is available in English, Russian, German and Spanish. Choose a lan
 
 Each new worktree starts from the current Git commit on a separate `fllama/…` branch. Uncommitted edits stay in the original checkout. Tasks that share a checkout run one at a time. Deleting a task keeps the worktree and branch on disk so its code can still be recovered. Fllama leaves merging to Git.
 
+### Coordinate a team
+
+Open a Git repository with at least one commit. Select the coordinator and its model in the composer, choose **Team mode**, and add up to three workers. You can set a model ID per worker or use the provider’s default selection. Submit a task as usual. The coordinator assigns independent subtasks, waits for the workers, and summarizes their results. Each worker starts from the same committed snapshot in a separate worktree.
+
+Use **Team** to open a worker’s conversation and see its status. Use **Branches** to jump to the changes in a worktree. Open tasks stay in tabs across restarts. Stopping the coordinator requests cancellation of its active workers.
+
 Fllama can also expose its local model server from **Settings → Fllama as an agent**.
 
 ## License

@@ -1047,6 +1047,29 @@ svg { display: block; flex: none; }
 .nav-action:hover { color: var(--text-color); background: var(--hover-color); }
 
 #chat-main { min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; background: var(--stage-bg); }
+.task-tabs { flex: none; display: flex; align-items: center; gap: 4px; overflow-x: auto; min-height: 41px; padding: 4px 10px; background: var(--surface); border-bottom: 1px solid var(--rule); }
+.open-task-tab { flex: 0 0 auto; display: flex; align-items: center; min-width: 0; max-width: min(230px, 75vw); border-radius: 7px; color: var(--text-muted); }
+.open-task-tab.active { background: var(--active-bg); color: var(--text-color); }
+.open-task-tab > button:first-child { min-width: 0; min-height: 32px; padding: 0 6px 0 9px; display: flex; gap: 7px; align-items: center; text-align: left; }
+.open-task-tab > button:first-child > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.open-task-tab > .icon-action { flex: none; }
+.team-mode-button { display: flex; gap: 6px; align-items: center; flex: none; min-height: 32px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 7px; color: var(--text-muted); }
+.team-mode-button[aria-pressed="true"] { color: var(--mint); background: var(--mint-bg); }
+.team-mode-button:disabled { opacity: .55; }
+.team-dialog-content { display: grid; gap: 15px; }
+#worker-options { display: grid; gap: 12px; }
+.worker-option { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.worker-option label { display: grid; gap: 4px; }
+.worker-option :is(select, input) { min-width: 0; width: 100%; }
+.team-dialog .modal-footer { display: flex; gap: 12px; justify-content: space-between; }
+.inspector-list { display: grid; gap: 6px; margin-top: 12px; }
+.inspector-list-item { width: 100%; display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 8px; border-radius: 7px; background: var(--hover-color); }
+.inspector-list-item:hover { color: var(--mint); }
+.inspector-list-item .task-dot { margin-top: 6px; flex: none; }
+.inspector-list-item strong, .inspector-list-item small { display: block; overflow-wrap: anywhere; }
+.inspector-list-item small { color: var(--text-muted); margin-top: 3px; }
+.team-phase { font-size: 14px; }
+.team-help { color: var(--text-muted); margin-top: 6px; }
 .task-bar { flex: 0 0 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px 0 22px; border-bottom: 1px solid var(--rule); }
 .task-location { display: flex; min-width: 0; align-items: center; gap: 10px; font-size: 12px; white-space: nowrap; }
 .task-location-icon, .task-project { color: var(--text-muted); }
@@ -1131,7 +1154,8 @@ svg { display: block; flex: none; }
 .shortcut-dot { display: inline-block; width: 3px; height: 3px; border-radius: 100%; background: var(--soft); vertical-align: middle; margin: 0 5px; }
 
 .inspector { flex: 0 0 clamp(218px, 21.2vw, 302px); min-width: 0; display: flex; flex-direction: column; background: var(--surface); border-left: 1px solid var(--rule); }
-.inspector-tabs { display: flex; align-items: stretch; height: 52px; flex: none; gap: 15px; padding: 0 14px; border-bottom: 1px solid var(--rule); }
+.inspector-tabs { display: flex; align-items: stretch; height: 52px; flex: none; gap: 10px; padding: 0 10px; overflow-x: auto; border-bottom: 1px solid var(--rule); }
+.inspector-tabs .inspector-tab { flex: 0 0 auto; }
 .inspector-tab { justify-content: flex-start; position: relative; min-width: 0; padding: 0 2px; font-size: 12px; font-weight: 580; color: var(--text-muted); gap: 4px; white-space: nowrap; }
 .inspector-tab:hover { color: var(--text-color); }
 .inspector-tab.active { color: var(--mint); }

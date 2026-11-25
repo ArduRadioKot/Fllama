@@ -37,6 +37,7 @@
         </aside>
 
         <main id="chat-main">
+          <div id="task-tabs" class="task-tabs" role="group" aria-label="Open tasks" data-i18n-title="task_tabs"></div>
           <header class="task-bar">
             <div class="task-location">
               <span id="task-location-icon" class="task-location-icon" data-icon="layers"></span>
@@ -77,6 +78,7 @@
                   <label class="select-chip model-chip" data-i18n-title="model_label"><select id="model-select" aria-label="Model"></select><span class="select-chevron" data-icon="chevronDown"></span></label>
                   <button id="reload-models" type="button" class="icon-action small" data-i18n-title="models_refresh" aria-label="Refresh models" hidden><span data-icon="refresh"></span></button>
                   <label id="isolation-control" class="select-chip isolation-chip" hidden><span data-icon="git"></span><select id="isolation-select" aria-label="Run location"><option value="worktree" data-i18n="worktree_label">Worktree</option><option value="project" data-i18n="project_folder">Project folder</option></select><span class="select-chevron" data-icon="chevronDown"></span></label>
+                  <button id="configure-team" type="button" class="team-mode-button" aria-pressed="false" data-i18n-title="team_mode"><span data-icon="layers"></span><span data-i18n="team_mode">Team mode</span></button>
                 </div>
                 <button id="send-btn" type="submit" class="run-button"><span data-i18n="send_btn">Run task</span><span data-icon="arrowUp"></span></button>
                 <button id="stop-btn" type="button" class="stop-button" hidden><span data-icon="stop"></span><span data-i18n="stop_btn">Stop</span></button>
@@ -91,6 +93,8 @@
             <button type="button" class="inspector-tab active" data-view="run" data-i18n="run_label">Run</button>
             <button type="button" class="inspector-tab" data-view="files" data-i18n="files_label">Files</button>
             <button type="button" class="inspector-tab" data-view="changes"><span data-i18n="changes_label">Changes</span><span id="change-count" hidden></span></button>
+            <button type="button" class="inspector-tab" data-view="team" data-i18n="team_label">Team</button>
+            <button type="button" class="inspector-tab" data-view="branches" data-i18n="branches_label">Branches</button>
           </div>
           <section id="inspector-run" class="inspector-body">
             <div class="run-status"><span id="run-status-icon" class="run-status-icon" data-icon="activity"></span><div><strong id="run-status-title"></strong><p id="run-status-detail"></p></div></div>
@@ -109,6 +113,8 @@
             <div class="changes-tools"><span id="changes-summary"></span><button id="refresh-changes" class="icon-action small" type="button" data-i18n-title="models_refresh" aria-label="Refresh"><span data-icon="refresh"></span></button></div>
             <div id="changed-files"></div>
           </section>
+          <section id="inspector-team" class="inspector-body" aria-live="polite" hidden></section>
+          <section id="inspector-branches" class="inspector-body" hidden></section>
         </aside>
       </div>
 
@@ -121,6 +127,16 @@
     <dialog id="diff-dialog" aria-labelledby="diff-title">
       <header class="diff-header"><strong id="diff-title"></strong><button id="close-diff" class="icon-action" type="button" aria-label="Close" data-i18n-title="close" data-icon="close"></button></header>
       <pre id="inline-diff"></pre>
+    </dialog>
+    <dialog id="team-dialog" class="model-dialog team-dialog" aria-labelledby="team-dialog-title">
+      <form id="team-form">
+        <div class="diff-header"><strong id="team-dialog-title" data-i18n="team_mode">Team mode</strong><button id="close-team-dialog" class="icon-action" type="button" aria-label="Close" data-i18n-title="close" data-icon="close"></button></div>
+        <div class="model-dialog-content team-dialog-content">
+          <p data-i18n="team_description">The agent selected in the composer plans the work, delegates to this team, and summarizes the results. Each subtask has a separate Git branch.</p>
+          <div id="worker-options"></div>
+        </div>
+        <div class="modal-footer"><button id="disable-team" class="inspector-action" type="button" data-i18n="team_disable">Use a single agent</button><button class="button-primary" type="submit" data-i18n="team_apply">Use this team</button></div>
+      </form>
     </dialog>
     <dialog id="custom-model-dialog" class="model-dialog" aria-labelledby="custom-model-title">
       <form id="custom-model-form">
@@ -739,6 +755,7 @@
     <script src="markdown.js"></script>
     <script src="provider-catalog.js"></script>
     <script src="locale-messages.js"></script>
+    <script src="team-plan.js"></script>
     <script src="renderer.js"></script>
   </body>
 </html>

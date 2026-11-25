@@ -315,18 +315,19 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
       if (!status.running) throw new Error(status.error || "Ollama is unavailable.");
     }
     controller.signal.throwIfAborted();
-    const run = native ? streamCli : directory && provider !== "opencode" ? runAgentLoop : streamChat;
+    const run = native ? streamCli : directory && provider !== "opencode" && !payload.coordinationOnly ? runAgentLoop : streamChat;
     const result = await run({
       streamChat,
       provider,
       settings,
       model: payload.model,
       messages: payload.messages || [],
-      tools: payload.tools,
+      tools: payload.coordinationOnly ? undefined : payload.tools,
       showThoughts: payload.showThoughts !== false,
       signal: controller.signal,
       projectRoot: directory,
       directory,
+      readOnly: payload.coordinationOnly === true,
       sessionKey: String(payload.sessionKey || requestId),
       lang: payload.lang || "ru",
       onDelta: (delta) => {
@@ -350,7 +351,7 @@ ipcMain.handle("send-message", async (event, payload = {}) => {
       activity: result.activity || activity,
     };
   } catch (error) {
-    if (error.cancellationUnconfirmed) return { answer, thinking, activity, error: error.message };
+    if (error.cancellationUnconfirmed) return { answer, thinking, activity, error: error.message, cancellationUnconfirmed: true };
     if (isAbort(error) || controller.signal.aborted) {
       return { answer, thinking, activity, aborted: true };
     }
@@ -438,7 +439,7 @@ ipcMain.handle("list-project", async (_event, payload = {}) => {
 });
 
 ipcMain.handle("inspect-project", (_event, root) => inspectProject(root));
-ipcMain.handle("create-worktree", (_event, root) => createWorktree(root, path.join(app.getPath("userData"), "worktrees")));
+ipcMain.handle("create-worktree", (_event, root, base) => createWorktree(root, path.join(app.getPath("userData"), "worktrees"), base));
 ipcMain.handle("list-changes", (_event, root, base) => listChanges(root, base));
 ipcMain.handle("read-diff", (_event, root, base, file, untracked) => readDiff(root, base, file, untracked));
 ipcMain.handle("reveal-project", async (_event, root) => shell.openPath(await projectDirectory(root)));
