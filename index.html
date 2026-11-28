@@ -46,47 +46,21 @@
         </div>
       </div>
       <figure class="showcase" id="preview">
-        <div class="showcase-window">
-          <div class="window-bar">
-            <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="window-brand"><img src="assets/fllama.png" alt="" width="20" height="20">Fllama</span>
-            <span class="preview-tag" data-t="previewLabel">Interactive preview</span>
-          </div>
-          <div class="window-body">
-            <div class="preview-sidebar">
-              <span class="mini-label" data-t="projects">Project</span>
-              <span class="demo-project"><span class="folder-icon" aria-hidden="true"></span>Atlas</span>
-              <div class="demo-tasks" role="group" aria-label="Example tasks" data-a="demoTasks">
-                <button type="button" class="demo-task" data-task="search" aria-pressed="true" disabled>
-                  <span class="task-dot" aria-hidden="true"></span>
-                  <span class="task-ident"><strong data-t="searchName">Improve search</strong><small>Codex CLI</small></span>
-                </button>
-                <button type="button" class="demo-task" data-task="tests" aria-pressed="false" disabled>
-                  <span class="task-dot alternate" aria-hidden="true"></span>
-                  <span class="task-ident"><strong data-t="testsName">Add parser tests</strong><small>Claude Code CLI</small></span>
-                </button>
-              </div>
-            </div>
-            <div class="preview-main">
-              <header class="preview-heading"><span class="crumb" id="demo-branch">fllama/search</span><h2 id="demo-title">Improve search</h2></header>
-              <div class="view-buttons" role="group" aria-label="Task view" data-a="demoViews">
-                <button type="button" data-view="run" aria-pressed="true" data-t="runTab" disabled>Run</button>
-                <button type="button" data-view="diff" aria-pressed="false" data-t="diffTab" disabled>Changes</button>
-              </div>
-              <div class="preview-output" id="demo-run">
-                <p class="demo-prompt" id="demo-prompt">Make search ignore surrounding whitespace.</p>
-                <div class="demo-result"><span class="task-dot" aria-hidden="true"></span><div><strong data-t="runComplete">Run complete</strong><p id="demo-detail">Normalized the query before matching and added a regression test.</p></div></div>
-              </div>
-              <div class="preview-output" id="demo-diff" hidden>
-                <p class="demo-file" id="demo-file">src/search.ts</p>
-                <pre><code><span id="demo-before" class="removed">− const query = input.toLowerCase()</span>
-<span id="demo-after" class="added">+ const query = input.trim().toLowerCase()</span></code></pre>
-              </div>
-            </div>
-          </div>
-          <div class="window-footer"><span data-t="sampleData">Sample project</span><span id="demo-agent">Codex CLI</span></div>
-        </div>
-        <figcaption data-t="caption">Switch tasks or open Changes to see the diff for each worktree.</figcaption>
+        <a class="showcase-window" href="docs/assets/workspace.jpg">
+          <img src="docs/assets/workspace.jpg" width="1320" height="860" alt="Fllama workspace with a project, task composer, and run inspector" data-alt="workspaceAlt">
+        </a>
+        <figcaption data-t="caption">Fllama 2.0 development build on macOS, shown with a sample project.</figcaption>
+      </figure>
+    </section>
+
+    <section class="screenshots wrap" aria-label="More screenshots" data-a="screenshotsLabel">
+      <figure>
+        <a class="showcase-window" href="docs/assets/git-changes.jpg"><img src="docs/assets/git-changes.jpg" width="1320" height="860" loading="lazy" alt="Fllama Changes inspector showing a file and its Git diff" data-alt="changesAlt"></a>
+        <figcaption data-t="changesCaption">Review file changes and Git diffs.</figcaption>
+      </figure>
+      <figure>
+        <a class="showcase-window" href="docs/assets/providers.jpg"><img src="docs/assets/providers.jpg" width="1320" height="860" loading="lazy" alt="Fllama settings with model provider configuration" data-alt="providersAlt"></a>
+        <figcaption data-t="providersCaption">Configure model providers.</figcaption>
       </figure>
     </section>
 
@@ -114,7 +88,7 @@
       <div class="wrap">
         <div class="section-intro download-intro">
           <h2 id="download-title" data-t="getFllama">Get Fllama</h2>
-          <p data-t="downloadNotice">The published installers are v1.0.0, the Ollama chat release. The preview above shows the redesigned agent workspace.</p>
+          <p data-t="downloadNotice">The published installers are v1.0.0, the Ollama chat release. The screenshots above show the Fllama 2.0 development build.</p>
         </div>
         <div class="install-grid">
           <div class="release-list">

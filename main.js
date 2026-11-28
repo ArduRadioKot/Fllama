@@ -18,7 +18,13 @@ const ru = {
   diffTab: 'Изменения',
   runComplete: 'Задача выполнена',
   sampleData: 'Пример проекта',
-  caption: 'Переключите задачу или откройте «Изменения», чтобы посмотреть Git diff.',
+  caption: 'Тестовая сборка Fllama 2.0 на macOS с примером проекта.',
+  screenshotsLabel: 'Другие скриншоты',
+  changesCaption: 'Просмотр изменений файлов и Git diff.',
+  providersCaption: 'Настройка провайдеров моделей.',
+  workspaceAlt: 'Рабочее пространство Fllama с проектом, полем задачи и панелью запуска',
+  changesAlt: 'Панель изменений Fllama с файлом и его Git diff',
+  providersAlt: 'Настройки провайдеров моделей в Fllama',
   providerTitle: 'Агенты и модели',
   cliList: 'Агенты',
   providerList: 'Провайдеры моделей',
@@ -70,7 +76,13 @@ const otherLocales = {
     "diffTab": "Änderungen",
     "runComplete": "Ausführung abgeschlossen",
     "sampleData": "Beispielprojekt",
-    "caption": "Wechsle die Aufgabe oder öffne „Änderungen“, um den Git-Diff des Worktrees zu sehen.",
+    "caption": "Fllama 2.0-Entwicklungsversion unter macOS mit einem Beispielprojekt.",
+    "screenshotsLabel": "Weitere Screenshots",
+    "changesCaption": "Dateiänderungen und Git-Diffs prüfen.",
+    "providersCaption": "Modellanbieter konfigurieren.",
+    "workspaceAlt": "Fllama-Arbeitsbereich mit Projekt, Aufgabenfeld und Ausführungsansicht",
+    "changesAlt": "Fllama-Änderungsansicht mit Datei und Git-Diff",
+    "providersAlt": "Fllama-Einstellungen für Modellanbieter",
     "providerTitle": "Agenten und Modelle",
     "cliList": "Agenten",
     "providerList": "Modellanbieter",
@@ -120,7 +132,13 @@ const otherLocales = {
     "diffTab": "Cambios",
     "runComplete": "Ejecución completada",
     "sampleData": "Proyecto de ejemplo",
-    "caption": "Cambia de tarea o abre «Cambios» para ver el diff de su worktree.",
+    "caption": "Versión de desarrollo de Fllama 2.0 en macOS con un proyecto de ejemplo.",
+    "screenshotsLabel": "Más capturas de pantalla",
+    "changesCaption": "Revisa los cambios de archivos y los diffs de Git.",
+    "providersCaption": "Configura proveedores de modelos.",
+    "workspaceAlt": "Espacio de trabajo de Fllama con proyecto, editor de tareas y panel de ejecución",
+    "changesAlt": "Panel de cambios de Fllama con un archivo y su diff de Git",
+    "providersAlt": "Configuración de proveedores de modelos en Fllama",
     "providerTitle": "Agentes y modelos",
     "cliList": "Agentes",
     "providerList": "Proveedores de modelos",
@@ -152,31 +170,14 @@ const otherLocales = {
   }
 };
 
-const tasks = {
-  search: {
-    name: 'searchName', agent: 'Codex CLI', branch: 'fllama/search', file: 'src/search.ts',
-    prompt: ['Make search ignore surrounding whitespace.', 'Игнорируй пробелы по краям поискового запроса.', 'Ignoriere Leerzeichen am Rand der Suchanfrage.', 'Ignora los espacios al principio y al final de la consulta.'],
-    detail: ['Normalized the query before matching and added a regression test.', 'Добавлена нормализация запроса и тест на регрессию.', 'Die Suchanfrage wurde normalisiert und ein Regressionstest hinzugefügt.', 'Se normalizó la consulta y se añadió una prueba de regresión.'],
-    before: 'const query = input.toLowerCase()',
-    after: 'const query = input.trim().toLowerCase()',
-  },
-  tests: {
-    name: 'testsName', agent: 'Claude Code CLI', branch: 'fllama/parser-tests', file: 'src/parser.test.ts',
-    prompt: ['Add a parser test for empty input.', 'Добавь тест парсера для пустого ввода.', 'Teste den Parser mit leerer Eingabe.', 'Añade una prueba del analizador para una entrada vacía.'],
-    detail: ['Added a regression test for an empty input string.', 'Добавлен тест на случай пустой входной строки.', 'Ein Regressionstest für leere Eingaben wurde hinzugefügt.', 'Se añadió una prueba de regresión para una entrada vacía.'],
-    before: '',
-    after: "expect(parse('')).toEqual([])",
-  },
-};
-
 const all = (selector) => [...document.querySelectorAll(selector)];
 const $ = (id) => document.getElementById(id);
 const localized = all('[data-t]');
 const labels = all('[data-a]');
 const english = Object.fromEntries(localized.map((node) => [node.dataset.t, node.textContent]));
 const englishLabels = Object.fromEntries(labels.map((node) => [node.dataset.a, node.getAttribute('aria-label')]));
-const taskButtons = all('[data-task]');
-const viewButtons = all('[data-view]');
+const images = all('[data-alt]');
+const englishAlts = Object.fromEntries(images.map((node) => [node.dataset.alt, node.alt]));
 const languageSelect = $('switch-language');
 const localeOptions = {
   en: { index: 0, title: 'Workspace for coding agents', label: 'Language', copied: 'Commands copied.', copyFailed: 'Select and copy the commands manually.' },
@@ -187,28 +188,8 @@ const localeOptions = {
 const dictionaries = { en: english, ru, ...otherLocales };
 const copyButton = $('copy-command');
 const feedback = $('copy-feedback');
-let taskId = 'search';
-let view = 'run';
 let locale = 'en';
 let feedbackTimeout;
-
-function renderDemo() {
-  const task = tasks[taskId];
-  const languageIndex = localeOptions[locale].index;
-  $('demo-title').textContent = dictionaries[locale][task.name];
-  $('demo-branch').textContent = task.branch;
-  $('demo-agent').textContent = task.agent;
-  $('demo-prompt').textContent = task.prompt[languageIndex];
-  $('demo-detail').textContent = task.detail[languageIndex];
-  $('demo-file').textContent = task.file;
-  $('demo-before').textContent = task.before ? '− ' + task.before : '';
-  $('demo-before').hidden = !task.before;
-  $('demo-after').textContent = '+ ' + task.after;
-  $('demo-diff').hidden = view !== 'diff';
-  $('demo-run').hidden = view !== 'run';
-  taskButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.task === taskId)));
-  viewButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
-}
 
 function applyLanguage(next) {
   locale = next;
@@ -220,7 +201,7 @@ function applyLanguage(next) {
   languageSelect.value = locale;
   languageSelect.setAttribute('aria-label', details.label);
   feedback.hidden = true;
-  renderDemo();
+  images.forEach((node) => { node.alt = dictionaries[locale][node.dataset.alt] || englishAlts[node.dataset.alt]; });
 }
 
 const queryLanguage = new URLSearchParams(location.search).get('lang');
@@ -243,15 +224,6 @@ languageSelect.addEventListener('change', () => {
   url.searchParams.set('lang', locale);
   history.replaceState(null, '', url);
 });
-
-for (const button of taskButtons) {
-  button.disabled = false;
-  button.addEventListener('click', () => { taskId = button.dataset.task; renderDemo(); });
-}
-for (const button of viewButtons) {
-  button.disabled = false;
-  button.addEventListener('click', () => { view = button.dataset.view; renderDemo(); });
-}
 
 if (navigator.clipboard?.writeText) {
   copyButton.hidden = false;
