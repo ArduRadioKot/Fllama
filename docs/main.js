@@ -1,116 +1,89 @@
-const ru = {
-  skip: 'Перейти к содержанию',
-  navigation: 'Навигация по сайту',
-  navPreview: 'Интерфейс',
-  navWorkflow: 'Как работает',
-  navDownload: 'Скачать',
-  heroTitle: "Агенты параллельно.",
-  heroBody: "Запускайте агентов в отдельных Git worktree, переключайте задачи и проверяйте изменения в одном окне.",
-  getFllama: 'Скачать Fllama',
-  seePreview: 'Посмотреть интерфейс',
-  previewLabel: 'Интерактивный пример',
-  projects: 'Проект',
-  demoTasks: 'Примеры задач',
-  demoViews: 'Вид задачи',
-  searchName: "Исправить стриминг",
-  testsName: "Добавить Kilo Gateway",
-  runTab: 'Запуск',
-  diffTab: 'Изменения',
-  runComplete: 'Задача выполнена',
-  sampleData: 'Пример проекта',
-  caption: "Интерактивный пример. Выберите задачу и откройте «Изменения», чтобы увидеть Git diff.",
-  providerTitle: 'Агенты и модели',
-  cliList: 'Агенты для кода',
-  providerList: 'Облачные API',
-  screenshotsTitle: 'Как выглядит Fllama',
-  screenshotsIntro: 'Скриншоты тестовой сборки Fllama 2.0 на macOS с примером проекта.',
-  workspaceAlt: 'В Fllama открыт проект с задачей, полем ввода и панелью запуска',
-  workspaceCaption: 'Слева проекты и задачи, в центре поле ввода, справа подробности запуска.',
-  changesAlt: 'Панель «Изменения» в Fllama показывает файл и его Git diff',
-  changesCaption: 'Вкладка «Изменения» показывает список файлов и Git diff выбранного файла.',
-  providersAlt: 'Настройки провайдеров моделей в Fllama',
-  providersCaption: 'Параметры подключения локальных серверов и облачных API.',
-  providerIntro: 'Выберите установленного агента или подключите провайдера моделей. Настройки агента и модели сохраняются для каждой задачи.',
-  cliSetup: 'Установите нужный CLI и войдите в его аккаунт. Для OpenCode можно указать адрес уже запущенного сервера.',
-  localTitle: 'Локальные модели',
-  localSetup: 'Запустите Ollama или локальный сервер LM Studio. Fllama покажет установленные модели и поможет скачать модели из каталога Ollama, включая Qwen2.5 Coder.',
-  apiSetup: 'Введите данные в настройках. Для другого OpenAI-совместимого сервера укажите базовый URL API и при необходимости ID модели.',
-  workflowTitle: "Своя ветка для задачи.",
-  workflowIntro: 'Git worktree создаёт рабочую копию из текущего коммита. Агенты в разных копиях могут редактировать файлы параллельно.',
-  workflow1Title: 'Откройте проект',
-  workflow1Body: 'Для работы с worktree откройте корень Git-репозитория. Выберите агента и модель, затем опишите задачу. Для диалога без файлов откройте задачу без проекта.',
-  workflowStartTitle: 'Выберите рабочую папку',
-  workflowStartBody: 'В режиме Worktree ветка и рабочая копия создаются при первом запуске. В режиме «Папка проекта» агент работает с текущими файлами. Дождитесь завершения запуска, прежде чем начать другую задачу в той же папке.',
-  workflow2Title: 'Проверьте изменения',
-  workflow2Body: 'Во вкладке «Запуск» видны статус и действия агента. «Файлы» показывает содержимое рабочей копии, а «Изменения» открывает Git diff выбранного файла.',
-  workflow3Title: 'Передайте задачу',
-  workflow3Body: 'Новая задача получит предыдущий запрос и ответ. Если работа шла в worktree, следующий агент сможет проверить правки в той же ветке и рабочей копии.',
-  downloadNotice: 'По ссылкам ниже доступны установщики v1.0.0 с чатом для Ollama. На скриншотах выше показана тестовая сборка Fllama 2.0.',
-  macFormat: 'Образ диска',
-  installer: 'Установщик',
-  allReleases: 'Все релизы',
-  sourceTitle: 'Запустить из исходников',
-  sourceBody: 'Для запуска версии из репозитория понадобятся Git и Node.js.',
-  terminal: 'Терминал',
-  copy: 'Копировать',
-  browseSource: 'Открыть репозиторий',
-  faqTitle: 'Частые вопросы',
-  faq1Question: 'Можно ли запускать модели локально?',
-  faq1Answer: 'Да. Запустите Ollama или LM Studio и выберите установленную модель. При работе с облачными провайдерами контекст задачи может передаваться их сервисам.',
-  faq2Question: 'Что будет с незакоммиченными правками?',
-  faq2Answer: 'Они останутся в исходной рабочей копии. Новый worktree создаётся из коммита. Для работы с текущими файлами выберите режим «Папка проекта».',
-  faq3Question: 'Как объединить ветки?',
-  faq3Answer: 'Проверьте diff в Fllama, затем выполните слияние средствами Git.',
-  faq4Question: 'Что будет после удаления задачи?',
-  faq4Answer: 'Fllama удалит задачу и её переписку. Git worktree и ветка останутся на диске.',
-  faq5Question: 'Какие ключи нужны для запуска?',
-  faq5Answer: 'Локальные Ollama и LM Studio могут работать без облачного API-ключа. CLI-агенты используют собственную авторизацию. Для облачных API обычно нужен ключ. В Kilo Gateway можно выбрать модель с суффиксом :free.',
-  footerFaq: 'Вопросы',
-    "ollamaCaption": "Чат и каталог моделей Ollama в Fllama 1.0.0",
-    "ollamaChatAlt": "Ответ модели Ollama в Fllama 1.0.0",
-    "ollamaModelsAlt": "Каталог моделей Ollama в Fllama 1.0.0",
-};
-
-const otherLocales = {
+const translations = {
+  "ru": {
+    "skip": "Перейти к содержанию",
+    "navigation": "Навигация по сайту",
+    "navPreview": "Интерфейс",
+    "navWorkflow": "Как работает",
+    "navIntegrations": "Интеграции",
+    "heroFirst": "Агенты.",
+    "heroSecond": "Параллельно.",
+    "heroBody": "Запускайте агентов в отдельных Git worktree и проверяйте их изменения в одном приложении.",
+    "sourceTitle": "Запустить из исходников",
+    "screenshotsTitle": "Интерфейс Fllama",
+    "shotControls": "Скриншоты интерфейса",
+    "shotChangesLabel": "Изменения",
+    "shotProvidersLabel": "Провайдеры",
+    "workspaceAlt": "Рабочее пространство Fllama с проектом, полем задачи и панелью запуска",
+    "caption": "Тестовая сборка Fllama 2.0 на macOS с примером проекта.",
+    "changesAlt": "Панель изменений Fllama с файлом и его Git diff",
+    "changesCaption": "Просмотр изменений файлов и Git diff.",
+    "providersAlt": "Настройки провайдеров моделей в Fllama",
+    "providersCaption": "Настройка провайдеров моделей.",
+    "workflowTitle": "От задачи до Git diff",
+    "workflowIntro": "Запускайте задачи параллельно и проверяйте изменения в отдельных рабочих копиях. Fllama также может работать прямо в папке проекта.",
+    "workflow1Title": "Откройте проект",
+    "workflow1Body": "Для работы с worktree откройте корень Git-репозитория. Выберите агента и модель, затем опишите задачу. Для диалога без файлов откройте задачу без проекта.",
+    "workflowStartTitle": "Выберите рабочую папку",
+    "workflowStartBody": "В режиме Worktree ветка и рабочая копия создаются при первом запуске. В режиме «Папка проекта» агент работает с текущими файлами. Дождитесь завершения запуска, прежде чем начать другую задачу в той же папке.",
+    "workflow2Title": "Проверьте изменения",
+    "workflow2Body": "Во вкладке «Запуск» видны статус и действия агента. «Файлы» показывает содержимое рабочей копии, а «Изменения» открывает Git diff выбранного файла.",
+    "workflow3Title": "Передайте задачу",
+    "workflow3Body": "Новая задача получит предыдущий запрос и ответ. Если работа шла в worktree, следующий агент сможет проверить правки в той же ветке и рабочей копии.",
+    "teamTitle": "Командный режим",
+    "teamIntro": "Командный режим Fllama 2.0 подходит для задач, которые можно разделить на независимые части. Откройте Git-репозиторий хотя бы с одним коммитом, выберите координатора и добавьте до трёх исполнителей.",
+    "coordinatorTitle": "Координатор",
+    "coordinatorBody": "Распределяет подзадачи, ждёт завершения работы и подводит итоги.",
+    "workersTitle": "Исполнители",
+    "workersBody": "Каждый исполнитель начинает с одного и того же коммита в отдельной рабочей копии. Для каждого можно выбрать модель.",
+    "teamReviewTitle": "Проверка",
+    "teamReviewBody": "В разделе «Команда» видны статусы и переписка исполнителей. В разделе «Ветки» можно проверить изменения перед слиянием в Git.",
+    "providerTitle": "Агенты и модели",
+    "providerIntro": "В Fllama 2.0 для каждой задачи можно выбрать агента, локальную модель или провайдера API.",
+    "cliList": "Агенты для кода",
+    "cliSetup": "Установите нужный CLI, войдите в аккаунт или настройте провайдера. Для OpenCode можно указать адрес запущенного сервера.",
+    "localTitle": "Локальные модели",
+    "localSetup": "Запустите Ollama или локальный сервер LM Studio. Fllama покажет установленные модели и поможет скачать модели из каталога Ollama, включая Qwen2.5 Coder.",
+    "providerList": "Облачные API",
+    "apiSetup": "Введите данные в настройках. Для другого OpenAI-совместимого сервера укажите базовый URL API и при необходимости ID модели.",
+    "faqTitle": "Частые вопросы",
+    "faq1Question": "Можно ли запускать модели локально?",
+    "faq1Answer": "Да. Запустите Ollama или LM Studio и выберите установленную модель. При работе с облачными провайдерами контекст задачи может передаваться их сервисам.",
+    "faq2Question": "Что будет с незакоммиченными правками?",
+    "faq2Answer": "Они останутся в исходной рабочей копии. Новый worktree создаётся из коммита. Для работы с текущими файлами выберите режим «Папка проекта».",
+    "faq3Question": "Как объединить ветки?",
+    "faq3Answer": "Проверьте diff в Fllama, затем выполните слияние средствами Git.",
+    "faq4Question": "Что будет после удаления задачи?",
+    "faq4Answer": "Fllama удалит задачу и её переписку. Git worktree и ветка останутся на диске.",
+    "faq5Question": "Какие ключи нужны для запуска?",
+    "faq5Answer": "Локальные серверы Ollama и LM Studio могут работать без ключа облачного API. У CLI-агентов свой способ входа. Облачным провайдерам обычно нужен ключ API. Проверьте настройки провайдера перед запуском задачи.",
+    "sourceBody": "Установите Git и Node.js, затем выполните эти команды. Подключите нужного агента или провайдера моделей в настройках.",
+    "browseSource": "Открыть репозиторий",
+    "terminal": "Терминал",
+    "copy": "Копировать",
+    "backTop": "Наверх"
+  },
   "de": {
     "skip": "Zum Inhalt springen",
     "navigation": "Hauptnavigation",
     "navPreview": "Arbeitsbereich",
     "navWorkflow": "Ablauf",
-    "navDownload": "Downloads",
-    "heroTitle": "Agenten parallel starten.",
-    "heroBody": "Starte Agenten in separaten Git-Worktrees. Wechsle zwischen Aufgaben und prüfe ihre Änderungen im selben Arbeitsbereich.",
-    "getFllama": "Fllama herunterladen",
-    "seePreview": "Arbeitsbereich ansehen",
-    "previewLabel": "Interaktive Vorschau",
-    "projects": "Projekt",
-    "demoTasks": "Beispielaufgaben",
-    "demoViews": "Aufgabenansicht",
-    "searchName": "Streaming reparieren",
-    "testsName": "Kilo Gateway hinzufügen",
-    "runTab": "Ausführung",
-    "diffTab": "Änderungen",
-    "runComplete": "Ausführung abgeschlossen",
-    "sampleData": "Beispielprojekt",
-    "caption": "Interaktive Vorschau. Wähle eine Aufgabe und öffne „Änderungen“ für den Git-Diff.",
-    "providerTitle": "Agenten und Modelle",
-    "cliList": "Coding-Agenten",
-    "providerList": "API-Anbieter",
-    "screenshotsTitle": "Fllama im Einsatz",
-    "screenshotsIntro": "Screenshots des Entwicklungsstands von Fllama 2.0 auf macOS mit einem Beispielprojekt.",
-    "workspaceAlt": "Fllama mit Projekt, Aufgabeneingabe und Ausführungsdetails",
-    "workspaceCaption": "Links stehen Projekte und Aufgaben, in der Mitte die Eingabe und rechts die Ausführungsdetails.",
-    "changesAlt": "Fllama zeigt eine geänderte Datei und ihren Git-Diff",
-    "changesCaption": "Unter „Änderungen“ findest du die geänderten Dateien und den Git-Diff der ausgewählten Datei.",
-    "providersAlt": "Einstellungen für Modellanbieter in Fllama",
-    "providersCaption": "Einstellungen für lokale Modellserver und Cloud-APIs.",
-    "providerIntro": "Wähle einen installierten Coding-Agenten oder verbinde einen Modellanbieter. Agent und Modell werden pro Aufgabe gespeichert.",
-    "cliSetup": "Installiere das gewünschte CLI und melde dich dort an. OpenCode kann auch einen laufenden Server verwenden.",
-    "localTitle": "Lokale Modelle",
-    "localSetup": "Starte Ollama oder den lokalen Server von LM Studio. Fllama listet installierte Modelle und lädt Modelle wie Qwen2.5 Coder aus dem Ollama-Katalog herunter.",
-    "apiSetup": "Hinterlege die Zugangsdaten in den Einstellungen. Für andere OpenAI-kompatible Server gib die API-Basis-URL und bei Bedarf eine Modell-ID an.",
-    "workflowTitle": "Ein Branch pro Aufgabe.",
-    "workflowIntro": "Ein Git-Worktree erstellt einen separaten Checkout aus dem aktuellen Commit. So können Agenten gleichzeitig Dateien bearbeiten.",
+    "navIntegrations": "Integrationen",
+    "heroFirst": "Agenten.",
+    "heroSecond": "Parallel.",
+    "heroBody": "Führe Coding-Agenten in separaten Git-Worktrees aus und prüfe ihre Änderungen in einer Desktop-App.",
+    "sourceTitle": "Aus dem Quellcode starten",
+    "screenshotsTitle": "Ein Blick in Fllama",
+    "shotControls": "Screenshots der Oberfläche",
+    "shotChangesLabel": "Git-Änderungen",
+    "shotProvidersLabel": "Anbieter",
+    "workspaceAlt": "Fllama-Arbeitsbereich mit Projekt, Aufgabenfeld und Ausführungsansicht",
+    "caption": "Fllama 2.0-Entwicklungsversion unter macOS mit einem Beispielprojekt.",
+    "changesAlt": "Fllama-Änderungsansicht mit Datei und Git-Diff",
+    "changesCaption": "Dateiänderungen und Git-Diffs prüfen.",
+    "providersAlt": "Fllama-Einstellungen für Modellanbieter",
+    "providersCaption": "Modellanbieter konfigurieren.",
+    "workflowTitle": "Von der Aufgabe zum Git-Diff",
+    "workflowIntro": "Führe Aufgaben parallel aus und prüfe Änderungen in separaten Checkouts. Fllama kann auch direkt im Projektordner arbeiten.",
     "workflow1Title": "Projekt öffnen",
     "workflow1Body": "Öffne das Stammverzeichnis des Git-Repositorys für Worktrees. Wähle einen Agenten und ein Modell und beschreibe die Aufgabe. Chats ohne Projektdateien sind ebenfalls möglich.",
     "workflowStartTitle": "Arbeitsordner wählen",
@@ -119,15 +92,22 @@ const otherLocales = {
     "workflow2Body": "Unter „Ausführung“ stehen Status und Aktivitäten. „Dateien“ zeigt den Checkout. Unter „Änderungen“ kannst du den Git-Diff einer Datei öffnen.",
     "workflow3Title": "Aufgabe übergeben",
     "workflow3Body": "Die Folgeaufgabe enthält den vorherigen Prompt und die Antwort. Bei einem Worktree kann der nächste Agent Änderungen im selben Branch und Checkout prüfen.",
-    "downloadNotice": "Die verlinkten Installationsdateien für v1.0.0 enthalten den Ollama-Chat. Die Screenshots oben zeigen den Entwicklungsstand von Fllama 2.0.",
-    "macFormat": "Disk-Image",
-    "installer": "Installationsprogramm",
-    "allReleases": "Alle Versionen",
-    "sourceTitle": "Aus dem Quellcode starten",
-    "sourceBody": "Du brauchst Git und Node.js, um den Stand aus dem Repository zu starten.",
-    "terminal": "Terminal",
-    "copy": "Kopieren",
-    "browseSource": "Repository öffnen",
+    "teamTitle": "Teammodus",
+    "teamIntro": "Nutze den Teammodus in Fllama 2.0 für Aufgaben, die sich in unabhängige Teile zerlegen lassen. Öffne ein Git-Repository mit mindestens einem Commit, wähle einen Koordinator und füge bis zu drei Worker hinzu.",
+    "coordinatorTitle": "Koordinator",
+    "coordinatorBody": "Verteilt Teilaufgaben, wartet auf die Worker und fasst ihre Ergebnisse zusammen.",
+    "workersTitle": "Worker",
+    "workersBody": "Alle Worker starten beim selben Commit in separaten Worktrees. Wähle für jeden Worker ein Modell.",
+    "teamReviewTitle": "Prüfung",
+    "teamReviewBody": "Unter „Team“ siehst du Status und Unterhaltungen der Worker. Unter „Branches“ prüfst du Änderungen vor dem Merge mit Git.",
+    "providerTitle": "Agenten und Modelle",
+    "providerIntro": "Wähle in Fllama 2.0 für jede Aufgabe einen Coding-Agenten, ein lokales Modell oder einen API-Anbieter.",
+    "cliList": "Coding-Agenten",
+    "cliSetup": "Installiere die CLI und melde dich an oder richte ihren Anbieter ein. OpenCode kann einen laufenden Server verwenden.",
+    "localTitle": "Lokale Modelle",
+    "localSetup": "Starte Ollama oder den lokalen Server von LM Studio. Fllama listet installierte Modelle und lädt Modelle wie Qwen2.5 Coder aus dem Ollama-Katalog herunter.",
+    "providerList": "API-Anbieter",
+    "apiSetup": "Hinterlege die Zugangsdaten in den Einstellungen. Für andere OpenAI-kompatible Server gib die API-Basis-URL und bei Bedarf eine Modell-ID an.",
     "faqTitle": "Häufige Fragen",
     "faq1Question": "Kann ich Modelle lokal ausführen?",
     "faq1Answer": "Ja. Starte Ollama oder LM Studio und wähle ein installiertes Modell. Bei Cloud-Anbietern kann der Aufgabenkontext an deren Dienste gesendet werden.",
@@ -138,51 +118,35 @@ const otherLocales = {
     "faq4Question": "Was passiert beim Löschen einer Aufgabe?",
     "faq4Answer": "Fllama entfernt die Aufgabe und ihre Unterhaltung. Der Git-Worktree und der Branch bleiben auf dem Datenträger.",
     "faq5Question": "Welche API-Schlüssel brauche ich?",
-    "faq5Answer": "Lokale Ollama- und LM-Studio-Server können ohne Cloud-Schlüssel laufen. CLI-Agenten verwenden ihre eigene Anmeldung. Cloud-Anbieter benötigen normalerweise einen Schlüssel. Bei Kilo Gateway kannst du ein Modell mit der Endung :free wählen.",
-    "footerFaq": "FAQ",
-    "ollamaCaption": "Ollama-Chat und Modellkatalog in Fllama 1.0.0",
-    "ollamaChatAlt": "Eine Ollama-Antwort in Fllama 1.0.0",
-    "ollamaModelsAlt": "Der Ollama-Modellkatalog in Fllama 1.0.0",
+    "faq5Answer": "Lokale Ollama- und LM-Studio-Server können ohne Cloud-API-Schlüssel laufen. CLI-Agenten nutzen ihre eigene Anmeldung. Cloud-Anbieter benötigen meist einen API-Schlüssel. Prüfe die Anbietereinstellungen vor dem Start.",
+    "sourceBody": "Installiere Git und Node.js und führe diese Befehle aus. Verbinde deinen Agenten oder Modellanbieter in den Einstellungen.",
+    "browseSource": "Repository öffnen",
+    "terminal": "Terminal",
+    "copy": "Kopieren",
+    "backTop": "Nach oben"
   },
   "es": {
     "skip": "Saltar al contenido",
     "navigation": "Navegación principal",
     "navPreview": "Interfaz",
     "navWorkflow": "Flujo de trabajo",
-    "navDownload": "Descargas",
-    "heroTitle": "Agentes en paralelo.",
-    "heroBody": "Ejecuta agentes en worktrees de Git separados. Cambia de tarea y revisa sus cambios en un mismo espacio.",
-    "getFllama": "Descargar Fllama",
-    "seePreview": "Ver la interfaz",
-    "previewLabel": "Vista previa interactiva",
-    "projects": "Proyecto",
-    "demoTasks": "Tareas de ejemplo",
-    "demoViews": "Vista de la tarea",
-    "searchName": "Corregir el streaming",
-    "testsName": "Añadir Kilo Gateway",
-    "runTab": "Ejecución",
-    "diffTab": "Cambios",
-    "runComplete": "Ejecución completada",
-    "sampleData": "Proyecto de ejemplo",
-    "caption": "Vista interactiva. Elige una tarea y abre «Cambios» para ver el diff de Git.",
-    "providerTitle": "Agentes y modelos",
-    "cliList": "Agentes de programación",
-    "providerList": "Proveedores de API",
+    "navIntegrations": "Integraciones",
+    "heroFirst": "Agentes.",
+    "heroSecond": "En paralelo.",
+    "heroBody": "Ejecuta agentes de programación en worktrees de Git separados y revisa sus cambios en una aplicación de escritorio.",
+    "sourceTitle": "Ejecutar desde el código fuente",
     "screenshotsTitle": "Dentro de Fllama",
-    "screenshotsIntro": "Capturas de la versión de desarrollo de Fllama 2.0 en macOS con un proyecto de ejemplo.",
-    "workspaceAlt": "Fllama con un proyecto, el editor de tareas y el inspector de ejecución",
-    "workspaceCaption": "Los proyectos y las tareas a la izquierda, el editor en el centro y los detalles de ejecución a la derecha.",
-    "changesAlt": "El panel Cambios de Fllama muestra un archivo y su diff de Git",
-    "changesCaption": "La pestaña Cambios muestra los archivos modificados y el diff de Git del archivo seleccionado.",
+    "shotControls": "Capturas de la interfaz",
+    "shotChangesLabel": "Cambios en Git",
+    "shotProvidersLabel": "Proveedores",
+    "workspaceAlt": "Espacio de trabajo de Fllama con proyecto, editor de tareas y panel de ejecución",
+    "caption": "Versión de desarrollo de Fllama 2.0 en macOS con un proyecto de ejemplo.",
+    "changesAlt": "Panel de cambios de Fllama con un archivo y su diff de Git",
+    "changesCaption": "Revisa los cambios de archivos y los diffs de Git.",
     "providersAlt": "Configuración de proveedores de modelos en Fllama",
-    "providersCaption": "Configuración para conectar servidores de modelos locales y API en la nube.",
-    "providerIntro": "Elige un agente de programación instalado o conecta un proveedor de modelos. Cada tarea conserva su selección.",
-    "cliSetup": "Instala la CLI que quieras usar e inicia sesión en ella. OpenCode también puede conectarse a un servidor en ejecución.",
-    "localTitle": "Modelos locales",
-    "localSetup": "Inicia Ollama o el servidor local de LM Studio. Fllama muestra los modelos instalados y puede descargar modelos del catálogo de Ollama, como Qwen2.5 Coder.",
-    "apiSetup": "Configura las credenciales en los ajustes. Para otro servidor compatible con OpenAI, indica la URL base de su API y el ID del modelo cuando sea necesario.",
-    "workflowTitle": "Una rama por tarea.",
-    "workflowIntro": "Un worktree de Git crea una copia independiente a partir del commit actual. Así, los agentes pueden editar archivos a la vez.",
+    "providersCaption": "Configura proveedores de modelos.",
+    "workflowTitle": "De la tarea al diff de Git",
+    "workflowIntro": "Ejecuta tareas en paralelo y revisa los cambios en copias separadas. Fllama también puede trabajar en la carpeta del proyecto.",
     "workflow1Title": "Abrir un proyecto",
     "workflow1Body": "Abre la raíz del repositorio Git para usar worktrees. Elige un agente y un modelo y describe la tarea. Para conversar sin archivos, crea una tarea sin proyecto.",
     "workflowStartTitle": "Elegir la carpeta de trabajo",
@@ -191,15 +155,22 @@ const otherLocales = {
     "workflow2Body": "Consulta el estado y la actividad en Ejecución, explora la copia en Archivos y revisa el diff de Git del archivo seleccionado en Cambios.",
     "workflow3Title": "Transferir la tarea",
     "workflow3Body": "La siguiente tarea recibe la petición y la respuesta anteriores. Si se usó un worktree, el siguiente agente puede revisar los cambios en la misma rama y copia de trabajo.",
-    "downloadNotice": "Los instaladores enlazados de v1.0.0 incluyen el chat de Ollama. Las capturas de arriba muestran la versión de desarrollo de Fllama 2.0.",
-    "macFormat": "Imagen de disco",
-    "installer": "Instalador",
-    "allReleases": "Todas las versiones",
-    "sourceTitle": "Ejecutar desde el código fuente",
-    "sourceBody": "Necesitas Git y Node.js para ejecutar la versión del repositorio.",
-    "terminal": "Terminal",
-    "copy": "Copiar",
-    "browseSource": "Abrir el repositorio",
+    "teamTitle": "Modo de equipo",
+    "teamIntro": "Usa el modo Equipo de Fllama 2.0 para tareas divisibles en partes independientes. Abre un repositorio Git con al menos un commit, elige un coordinador y añade hasta tres agentes de trabajo.",
+    "coordinatorTitle": "Coordinador",
+    "coordinatorBody": "Asigna las subtareas, espera a que terminen los agentes y resume sus resultados.",
+    "workersTitle": "Agentes de trabajo",
+    "workersBody": "Cada agente parte del mismo commit en un worktree separado. Puedes elegir un modelo para cada agente.",
+    "teamReviewTitle": "Revisión",
+    "teamReviewBody": "En Equipo puedes ver el estado y las conversaciones de los agentes. Revisa los cambios en Ramas antes de fusionarlos con Git.",
+    "providerTitle": "Agentes y modelos",
+    "providerIntro": "En Fllama 2.0 puedes elegir un agente, un modelo local o un proveedor de API para cada tarea.",
+    "cliList": "Agentes de programación",
+    "cliSetup": "Instala la CLI e inicia sesión o configura su proveedor. OpenCode también puede usar un servidor en ejecución.",
+    "localTitle": "Modelos locales",
+    "localSetup": "Inicia Ollama o el servidor local de LM Studio. Fllama muestra los modelos instalados y puede descargar modelos del catálogo de Ollama, como Qwen2.5 Coder.",
+    "providerList": "Proveedores de API",
+    "apiSetup": "Configura las credenciales en los ajustes. Para otro servidor compatible con OpenAI, indica la URL base de su API y el ID del modelo cuando sea necesario.",
     "faqTitle": "Preguntas frecuentes",
     "faq1Question": "¿Puedo ejecutar modelos de forma local?",
     "faq1Answer": "Sí. Inicia Ollama o LM Studio y elige un modelo instalado. Los proveedores en la nube pueden recibir el contexto de la tarea.",
@@ -210,88 +181,47 @@ const otherLocales = {
     "faq4Question": "¿Qué sucede al eliminar una tarea?",
     "faq4Answer": "Fllama elimina la tarea y su conversación. El worktree de Git y la rama permanecen en el disco.",
     "faq5Question": "¿Qué claves de API necesito?",
-    "faq5Answer": "Los servidores locales Ollama y LM Studio pueden funcionar sin claves de la nube. Los agentes CLI usan su propio inicio de sesión. Los proveedores en la nube suelen requerir una clave. Con Kilo Gateway puedes elegir un modelo con el sufijo :free.",
-    "footerFaq": "Preguntas frecuentes",
-    "ollamaCaption": "Chat y catálogo de Ollama en Fllama 1.0.0",
-    "ollamaChatAlt": "Una respuesta de Ollama en Fllama 1.0.0",
-    "ollamaModelsAlt": "El catálogo de Ollama en Fllama 1.0.0",
+    "faq5Answer": "Los servidores locales de Ollama y LM Studio pueden funcionar sin clave de API en la nube. Los agentes CLI tienen su propio inicio de sesión. Los proveedores en la nube suelen requerir una clave de API. Revisa sus ajustes antes de iniciar una tarea.",
+    "sourceBody": "Instala Git y Node.js y ejecuta estos comandos. Conecta tu agente o proveedor de modelos en Configuración.",
+    "browseSource": "Abrir el repositorio",
+    "terminal": "Terminal",
+    "copy": "Copiar",
+    "backTop": "Volver arriba"
   }
-};
-
-const tasks = {
-  search: {
-    name: 'searchName', agent: 'Codex CLI', branch: 'fllama/streaming', file: 'src/providers.js',
-    prompt: ['Keep Cyrillic text intact when the stream splits a character.', 'Сохрани кириллицу, даже если поток разбивает символ на части.', 'Erhalte kyrillische Zeichen, wenn ein Zeichen auf mehrere Chunks verteilt ist.', 'Conserva los caracteres cirílicos cuando el flujo divida un carácter.'],
-    detail: ['The decoder preserves incomplete UTF-8 bytes between chunks.', 'Декодер сохраняет неполные последовательности UTF-8 между частями потока.', 'Der Decoder bewahrt unvollständige UTF-8-Sequenzen zwischen Chunks.', 'El decodificador conserva las secuencias UTF-8 incompletas entre fragmentos.'],
-    before: 'buf += chunk.toString()',
-    after: 'buf += decoder.write(chunk)',
-  },
-  tests: {
-    name: 'testsName', agent: 'Claude Code CLI', branch: 'fllama/kilo', file: 'src/provider-catalog.js',
-    prompt: ['Add Kilo Gateway as a model provider.', 'Подключи Kilo Gateway как провайдера моделей.', 'Füge Kilo Gateway als Modellanbieter hinzu.', 'Añade Kilo Gateway como proveedor de modelos.'],
-    detail: ['Kilo Gateway appears in the provider picker.', 'Kilo Gateway появился в списке провайдеров.', 'Kilo Gateway erscheint in der Anbieterauswahl.', 'Kilo Gateway aparece en la lista de proveedores.'],
-    before: '',
-    after: "kilo: { label: 'Kilo Gateway', … }",
-  },
 };
 
 const all = (selector) => [...document.querySelectorAll(selector)];
 const $ = (id) => document.getElementById(id);
 const localized = all('[data-t]');
 const labels = all('[data-a]');
-const altImages = all('[data-alt]');
-const english = Object.fromEntries([
-  ...localized.map((node) => [node.dataset.t, node.textContent]),
-  ...altImages.map((node) => [node.dataset.alt, node.alt]),
-]);
+const english = Object.fromEntries(localized.map((node) => [node.dataset.t, node.textContent]));
 const englishLabels = Object.fromEntries(labels.map((node) => [node.dataset.a, node.getAttribute('aria-label')]));
-const taskButtons = all('[data-task]');
-const viewButtons = all('[data-view]');
+const images = all('[data-alt]');
+const englishAlts = Object.fromEntries(images.map((node) => [node.dataset.alt, node.alt]));
 const languageSelect = $('switch-language');
 const localeOptions = {
-  en: { index: 0, title: 'Workspace for coding agents', label: 'Language', copied: 'Commands copied.', copyFailed: 'Select and copy the commands manually.' },
-  ru: { index: 1, title: 'Рабочее пространство для ИИ-агентов', label: 'Язык', copied: 'Команды скопированы.', copyFailed: 'Выделите и скопируйте команды вручную.' },
-  de: { index: 2, title: 'Arbeitsbereich für Coding-Agenten', label: 'Sprache', copied: 'Befehle kopiert.', copyFailed: 'Markiere und kopiere die Befehle manuell.' },
-  es: { index: 3, title: 'Espacio para agentes de programación', label: 'Idioma', copied: 'Comandos copiados.', copyFailed: 'Selecciona y copia los comandos manualmente.' },
+  en: { title: 'Workspace for coding agents', label: 'Language', copied: 'Commands copied.', copyFailed: 'Select and copy the commands manually.' },
+  ru: { title: 'Рабочее пространство для ИИ-агентов', label: 'Язык', copied: 'Команды скопированы.', copyFailed: 'Выделите и скопируйте команды вручную.' },
+  de: { title: 'Arbeitsbereich für Coding-Agenten', label: 'Sprache', copied: 'Befehle kopiert.', copyFailed: 'Markiere und kopiere die Befehle manuell.' },
+  es: { title: 'Espacio para agentes de programación', label: 'Idioma', copied: 'Comandos copiados.', copyFailed: 'Selecciona y copia los comandos manualmente.' },
 };
-const dictionaries = { en: english, ru, ...otherLocales };
+const dictionaries = { en: english, ...translations };
 const copyButton = $('copy-command');
 const feedback = $('copy-feedback');
-let taskId = 'search';
-let view = 'run';
 let locale = 'en';
 let feedbackTimeout;
-
-function renderDemo() {
-  const task = tasks[taskId];
-  const languageIndex = localeOptions[locale].index;
-  $('demo-title').textContent = dictionaries[locale][task.name];
-  $('demo-branch').textContent = task.branch;
-  $('demo-agent').textContent = task.agent;
-  $('demo-prompt').textContent = task.prompt[languageIndex];
-  $('demo-detail').textContent = task.detail[languageIndex];
-  $('demo-file').textContent = task.file;
-  $('demo-before').textContent = task.before ? '- ' + task.before : '';
-  $('demo-before').hidden = !task.before;
-  $('demo-after').textContent = '+ ' + task.after;
-  $('demo-diff').hidden = view !== 'diff';
-  $('demo-run').hidden = view !== 'run';
-  taskButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.task === taskId)));
-  viewButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
-}
 
 function applyLanguage(next) {
   locale = next;
   const details = localeOptions[locale];
   document.documentElement.lang = locale;
-  document.title = 'Fllama: ' + details.title;
+  document.title = 'Fllama 2.0 — ' + details.title;
   localized.forEach((node) => { node.textContent = dictionaries[locale][node.dataset.t] || english[node.dataset.t]; });
-  altImages.forEach((node) => { node.alt = dictionaries[locale][node.dataset.alt] || english[node.dataset.alt]; });
   labels.forEach((node) => { node.setAttribute('aria-label', dictionaries[locale][node.dataset.a] || englishLabels[node.dataset.a]); });
   languageSelect.value = locale;
   languageSelect.setAttribute('aria-label', details.label);
-  feedback.hidden = true;
-  renderDemo();
+  feedback.textContent = '';
+  images.forEach((node) => { node.alt = dictionaries[locale][node.dataset.alt] || englishAlts[node.dataset.alt]; });
 }
 
 const queryLanguage = new URLSearchParams(location.search).get('lang');
@@ -315,15 +245,6 @@ languageSelect.addEventListener('change', () => {
   history.replaceState(null, '', url);
 });
 
-for (const button of taskButtons) {
-  button.disabled = false;
-  button.addEventListener('click', () => { taskId = button.dataset.task; renderDemo(); });
-}
-for (const button of viewButtons) {
-  button.disabled = false;
-  button.addEventListener('click', () => { view = button.dataset.view; renderDemo(); });
-}
-
 if (navigator.clipboard?.writeText) {
   copyButton.hidden = false;
   copyButton.addEventListener('click', async () => {
@@ -333,32 +254,50 @@ if (navigator.clipboard?.writeText) {
     } catch {
       feedback.textContent = localeOptions[locale].copyFailed;
     }
-    feedback.hidden = false;
     clearTimeout(feedbackTimeout);
-    feedbackTimeout = setTimeout(() => { feedback.hidden = true; }, 4000);
+    feedbackTimeout = setTimeout(() => { feedback.textContent = ''; }, 4000);
   });
 }
+
+const screenshotControls = document.querySelector('.shot-controls');
+const screenshotButtons = all('[data-shot]');
+const screenshots = all('.product-shot');
+
+function showScreenshot(id) {
+  screenshotButtons.forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.shot === id));
+  });
+  screenshots.forEach((shot) => {
+    shot.hidden = shot.id !== id;
+    shot.classList.remove('shot-changed');
+  });
+}
+
+showScreenshot(screenshotButtons[0].dataset.shot);
+screenshotControls.hidden = false;
+screenshotButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-pressed') === 'true') return;
+    showScreenshot(button.dataset.shot);
+    $(button.dataset.shot).classList.add('shot-changed');
+  });
+});
 
 if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  const reveals = document.querySelectorAll([
-    '.hero-copy > *', '.showcase', '.screenshots .section-intro > *', '.product-shot', '.providers > *', '.workflow .section-intro > *',
-    '.workflow-row', '.download-intro > *', '.install-grid > *', '.release-preview',
-    '.faq > h2', '.faq details', '.footer-inner > *',
-  ].join(','));
-  const observer = new IntersectionObserver((entries) => {
+  const entranceGroups = all([
+    '.hero h1', '.hero-action', '.workspace-heading',
+    '.chapter-heading', '.workflow-list', '.team-roles',
+    '.integration-groups', '.faq dl', '.terminal', '.footer-links',
+  ].join(', '));
+  const entrance = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
-      entry.target.classList.add('scene-enter');
-      observer.unobserve(entry.target);
+      Array.from(entry.target.children).forEach((child, index) => {
+        child.style.setProperty('--enter-delay', Math.min(index, 3) * 65 + 'ms');
+        child.classList.add('entered');
+      });
+      entrance.unobserve(entry.target);
     }
   }, { threshold: .12 });
-  reveals.forEach((element) => observer.observe(element));
-}
-
-for (const button of [...taskButtons, ...viewButtons]) {
-  button.addEventListener('click', () => {
-    const pane = $(view === 'diff' ? 'demo-diff' : 'demo-run');
-    pane.classList.remove('just-changed');
-    requestAnimationFrame(() => pane.classList.add('just-changed'));
-  });
+  entranceGroups.forEach((group) => entrance.observe(group));
 }
