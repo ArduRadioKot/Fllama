@@ -1,284 +1,269 @@
-const I18N = {
-  en: {
-    skip: 'Skip to content',
-    'nav.features': 'What it does',
-    'nav.how': 'How it runs',
-    'nav.faq': 'Questions',
-    'nav.download': 'Download',
-    'hero.l1': 'Chat stays',
-    'hero.l2': 'on this machine.',
-    'hero.sub': 'Desktop client for Ollama, LM Studio, Codex, Claude Code and OpenCode. Nothing is sent to us.',
-    'hero.download': 'Download Fllama',
-    'hero.source': 'Source on GitHub',
-    'ui.chat': 'Chat',
-    'ui.project': 'Project',
-    'ui.thoughts': 'Thoughts',
-    'ui.message': 'Message',
-    'ui.placeholder': 'Ask the local model',
-    'ui.send': 'Send',
-    'ui.projectNote': 'The agent may read and edit files in this folder. Chat mode does not.',
-    'ui.model': 'Model',
-    'demo.user': 'Where does this conversation go?',
-    'demo.think': 'Fllama is a local Electron client. The reply comes from a model on this computer. There is no Fllama cloud.',
-    'demo.ai': 'It stays here. Fllama does not collect chats. The model you picked answers on this computer.',
-    'demo.user2': 'Can it edit files?',
-    'demo.ai2': 'Switch to Project and open a folder. Chat will not touch the disk.',
-    'demo.reply': 'This demo runs in the page. In the app, the same island talks to a model on your machine.',
-    'ghost.ai': 'Only in Project.',
-    'features.title': 'What it does',
-    'f1.title': 'Five providers, one window',
-    'f1.body': 'Ollama and LM Studio stay on the computer. Codex, Claude Code and OpenCode join through the same settings.',
-    'f2.title': 'Chat talks. Project works.',
-    'f2.body': 'Chat is a thread with a model. Project points at a folder: the agent may list, read and edit files inside it, and nothing above it.',
-    'f3.title': 'Answers as Markdown',
-    'f3.body': 'Headings, lists, tables, fences and tasks render in the thread. Thoughts stay folded until you open them.',
-    'how.title': 'How it runs',
-    's1.a': 'Pick a model',
-    's1.b': 'already on disk',
-    's1.cap': 'Installed models appear in the list. Fllama does not download them unless you ask Ollama to.',
-    's2.a': 'Ask from the',
-    's2.b': 'chat island',
-    's2.cap': 'Type in the same island the thread lives in. The reply streams in. Thoughts fold above it.',
-    's3.a': 'Open the folder',
-    's3.b': 'the work lives in',
-    's3.cap': 'Project mode keeps the agent inside that path. It cannot walk out through .. or a symlink.',
-    's4.a': 'Let the agent',
-    's4.b': 'edit the files',
-    's4.cap': 'It reads, searches and patches inside the folder. OpenCode keeps its own tools; Fllama does not double them.',
-    'faq.title': 'Questions',
-    'faq.1.q': 'Does Fllama collect any data?',
-    'faq.1.a': 'No. Chats and project files stay on the machine. Fllama has no telemetry and no account.',
-    'faq.2.q': 'Can I use it at work?',
-    'faq.2.a': 'Yes. It is free for personal use and for internal use at a company. Read the GPL v2.0 licence for the exact terms.',
-    'faq.3.q': 'What has to be installed?',
-    'faq.3.a': 'Fllama itself, plus the provider you want: Ollama or LM Studio for local models, or Codex, Claude Code or OpenCode if you already use those.',
-    'faq.4.q': 'Which models can I run?',
-    'faq.4.a': 'Any model the chosen provider serves. For Ollama that includes Llama, Mistral, Gemma, Qwen and the rest of the <a href="https://ollama.com/library">Ollama library</a>.',
-    'faq.5.q': 'Is the code open?',
-    'faq.5.a': 'Yes. It lives on <a href="https://github.com/arduradiokot/fllama">GitHub</a> under GPL v2.0.',
-    'faq.6.q': 'What is the difference between Chat and Project?',
-    'faq.6.a': 'Chat is a conversation. Project attaches a folder so the agent can read and edit files inside it. OpenCode already has its own tools; Fllama does not stack a second set on top.',
-    'dl.title': 'Download Fllama',
-    'dl.lead': 'Version 1.0.0 for Windows, macOS and Linux. GPL v2.0, free for home and for work.',
-    'dl.win': 'Windows 10 and 11, x64 installer.',
-    'dl.mac': 'macOS 11+, Intel and Apple Silicon.',
-    'dl.linux': 'AppImage and deb for x64.',
-    'dl.btn': 'Download',
-    'cta.win': 'Windows',
-    'cta.mac': 'macOS',
-    'cta.linux': 'Linux',
-    'foot.license': 'GPL v2.0',
-    'foot.releases': 'Releases'
+const ru = {
+  skip: 'Перейти к содержанию',
+  navigation: 'Навигация по сайту',
+  navPreview: 'Интерфейс',
+  navWorkflow: 'Как работает',
+  navDownload: 'Скачать',
+  heroTitle: 'Запускайте агентов параллельно.',
+  heroBody: 'У каждой задачи свой агент и Git worktree. Переключайтесь между запусками, проверяйте изменения и передавайте задачи в одном окне.',
+  getFllama: 'Скачать Fllama',
+  seePreview: 'Посмотреть интерфейс',
+  previewLabel: 'Интерактивный пример',
+  projects: 'Проект',
+  demoTasks: 'Примеры задач',
+  demoViews: 'Вид задачи',
+  searchName: 'Улучшить поиск',
+  testsName: 'Добавить тесты парсера',
+  runTab: 'Запуск',
+  diffTab: 'Изменения',
+  runComplete: 'Задача выполнена',
+  sampleData: 'Пример проекта',
+  caption: 'Переключите задачу или откройте «Изменения», чтобы посмотреть Git diff.',
+  providerTitle: 'Агенты и модели',
+  cliList: 'Агенты',
+  providerList: 'Провайдеры моделей',
+  workflowTitle: 'Отдельная ветка для каждой задачи.',
+  workflowIntro: 'Git worktree создаёт рабочую копию из текущего коммита. Агенты в разных копиях могут редактировать файлы параллельно.',
+  workflow1Title: 'Откройте проект',
+  workflow1Body: 'Выберите локальную папку, а затем агента и модель для задачи.',
+  workflow2Title: 'Проверьте изменения',
+  workflow2Body: 'Смотрите Git diff, открывайте файлы и следите за действиями агента.',
+  workflow3Title: 'Передайте задачу',
+  workflow3Body: 'Следующий агент получит переписку и доступ к той же рабочей копии.',
+  downloadNotice: 'Опубликованные установщики v1.0.0 содержат чат для Ollama. Выше показан интерфейс нового оркестратора.',
+  macFormat: 'Образ диска',
+  installer: 'Установщик',
+  allReleases: 'Все релизы',
+  sourceTitle: 'Запустить из исходников',
+  sourceBody: 'Для запуска версии из репозитория понадобятся Git и Node.js.',
+  terminal: 'Терминал',
+  copy: 'Копировать',
+  browseSource: 'Открыть репозиторий',
+  faqTitle: 'Частые вопросы',
+  faq1Question: 'Можно ли запускать модели локально?',
+  faq1Answer: 'Да. Запустите Ollama или LM Studio и выберите установленную модель. При работе с облачными провайдерами контекст задачи может передаваться их сервисам.',
+  faq2Question: 'Что будет с незакоммиченными правками?',
+  faq2Answer: 'Они останутся в исходной рабочей копии. Новый worktree создаётся из коммита. Для работы с текущими файлами выберите режим «Папка проекта».',
+  faq3Question: 'Как объединить ветки?',
+  faq3Answer: 'Проверьте diff в Fllama, затем выполните слияние средствами Git.',
+  footerFaq: 'Вопросы',
+};
+
+const otherLocales = {
+  "de": {
+    "skip": "Zum Inhalt springen",
+    "navigation": "Hauptnavigation",
+    "navPreview": "Arbeitsbereich",
+    "navWorkflow": "Ablauf",
+    "navDownload": "Downloads",
+    "heroTitle": "Coding-Agenten parallel ausführen.",
+    "heroBody": "Gib jeder Aufgabe einen Agenten und einen Git-Worktree. Wechsle zwischen Ausführungen, prüfe Änderungen und übergib Aufgaben in einem Arbeitsbereich.",
+    "getFllama": "Fllama herunterladen",
+    "seePreview": "Arbeitsbereich ansehen",
+    "previewLabel": "Interaktive Vorschau",
+    "projects": "Projekt",
+    "demoTasks": "Beispielaufgaben",
+    "demoViews": "Aufgabenansicht",
+    "searchName": "Suche verbessern",
+    "testsName": "Parser-Tests hinzufügen",
+    "runTab": "Ausführung",
+    "diffTab": "Änderungen",
+    "runComplete": "Ausführung abgeschlossen",
+    "sampleData": "Beispielprojekt",
+    "caption": "Wechsle die Aufgabe oder öffne „Änderungen“, um den Git-Diff des Worktrees zu sehen.",
+    "providerTitle": "Agenten und Modelle",
+    "cliList": "Agenten",
+    "providerList": "Modellanbieter",
+    "workflowTitle": "Ein eigener Branch für jede Aufgabe.",
+    "workflowIntro": "Ein Git-Worktree erstellt einen separaten Checkout aus dem aktuellen Commit. So können Agenten gleichzeitig Dateien bearbeiten.",
+    "workflow1Title": "Projekt öffnen",
+    "workflow1Body": "Wähle einen lokalen Ordner sowie einen Agenten und ein Modell für die Aufgabe.",
+    "workflow2Title": "Änderungen prüfen",
+    "workflow2Body": "Prüfe den Git-Diff, öffne Dateien und verfolge die Ausführung.",
+    "workflow3Title": "Aufgabe übergeben",
+    "workflow3Body": "Ein anderer Agent erhält den Verlauf und Zugriff auf denselben Checkout.",
+    "downloadNotice": "Die Installationsdateien für v1.0.0 enthalten den Ollama-Chat. Oben siehst du den neuen Agenten-Arbeitsbereich.",
+    "macFormat": "Disk-Image",
+    "installer": "Installationsprogramm",
+    "allReleases": "Alle Versionen",
+    "sourceTitle": "Aus dem Quellcode starten",
+    "sourceBody": "Du brauchst Git und Node.js, um den Stand aus dem Repository zu starten.",
+    "terminal": "Terminal",
+    "copy": "Kopieren",
+    "browseSource": "Repository öffnen",
+    "faqTitle": "Häufige Fragen",
+    "faq1Question": "Kann ich Modelle lokal ausführen?",
+    "faq1Answer": "Ja. Starte Ollama oder LM Studio und wähle ein installiertes Modell. Bei Cloud-Anbietern kann der Aufgabenkontext an deren Dienste gesendet werden.",
+    "faq2Question": "Was passiert mit Änderungen ohne Commit?",
+    "faq2Answer": "Sie bleiben im ursprünglichen Checkout. Ein neuer Worktree beginnt beim aktuellen Commit. Wähle „Projektordner“, um mit den aktuellen Dateien zu arbeiten.",
+    "faq3Question": "Wie führe ich Branches zusammen?",
+    "faq3Answer": "Prüfe den Diff in Fllama und führe anschließend den Merge mit Git aus.",
+    "footerFaq": "FAQ"
   },
-  ru: {
-    skip: 'К содержанию',
-    'nav.features': 'Что умеет',
-    'nav.how': 'Как работает',
-    'nav.faq': 'Вопросы',
-    'nav.download': 'Скачать',
-    'hero.l1': 'Чат остаётся',
-    'hero.l2': 'на этой машине.',
-    'hero.sub': 'Десктоп-клиент для Ollama, LM Studio, Codex, Claude Code и OpenCode. Нам ничего не отправляется.',
-    'hero.download': 'Скачать Fllama',
-    'hero.source': 'Код на GitHub',
-    'ui.chat': 'Чат',
-    'ui.project': 'Проект',
-    'ui.thoughts': 'Мысли',
-    'ui.message': 'Сообщение',
-    'ui.placeholder': 'Спросите локальную модель',
-    'ui.send': 'Отправить',
-    'ui.projectNote': 'Агент может читать и править файлы в этой папке. В режиме чата этого нет.',
-    'ui.model': 'Модель',
-    'demo.user': 'Куда уходит этот разговор?',
-    'demo.think': 'Fllama: локальный клиент на Electron. Ответ идёт от модели на этом компьютере. Облака Fllama нет.',
-    'demo.ai': 'Он остаётся здесь. Fllama не собирает чаты. Отвечает модель, которую вы выбрали на этом компьютере.',
-    'demo.user2': 'Он может править файлы?',
-    'demo.ai2': 'Переключитесь в Проект и откройте папку. Чат диск не трогает.',
-    'demo.reply': 'Это демо на странице. В приложении тот же остров говорит с моделью на вашей машине.',
-    'ghost.ai': 'Только в Проекте.',
-    'features.title': 'Что умеет',
-    'f1.title': 'Пять провайдеров, одно окно',
-    'f1.body': 'Ollama и LM Studio остаются на компьютере. Codex, Claude Code и OpenCode подключаются в тех же настройках.',
-    'f2.title': 'Чат говорит. Проект работает.',
-    'f2.body': 'Чат: переписка с моделью. Проект указывает на папку: агент может читать и править файлы внутри неё и нигде выше.',
-    'f3.title': 'Ответы как Markdown',
-    'f3.body': 'Заголовки, списки, таблицы, блоки кода и задачи рисуются в ленте. Мысли свёрнуты, пока их не открыть.',
-    'how.title': 'Как работает',
-    's1.a': 'Выберите модель',
-    's1.b': 'уже на диске',
-    's1.cap': 'В списке установленные модели. Fllama сама их не качает, пока вы не попросите Ollama.',
-    's2.a': 'Спросите с',
-    's2.b': 'острова чата',
-    's2.cap': 'Пишите в том же острове, где живёт лента. Ответ идёт потоком. Мысли складываются над ним.',
-    's3.a': 'Откройте папку',
-    's3.b': 'где лежит работа',
-    's3.cap': 'Режим проекта держит агента в этом пути. Выйти через .. или симлинк нельзя.',
-    's4.a': 'Пусть агент',
-    's4.b': 'правит файлы',
-    's4.cap': 'Он читает, ищет и патчит внутри папки. У OpenCode свои инструменты; Fllama их не дублирует.',
-    'faq.title': 'Вопросы',
-    'faq.1.q': 'Собирает ли Fllama данные?',
-    'faq.1.a': 'Нет. Чаты и файлы проекта остаются на машине. Нет телеметрии и нет аккаунта.',
-    'faq.2.q': 'Можно ли использовать на работе?',
-    'faq.2.a': 'Да. Бесплатно для себя и для внутреннего использования в компании. Точные условия в лицензии GPL v2.0.',
-    'faq.3.q': 'Что нужно установить?',
-    'faq.3.a': 'Саму Fllama и выбранный провайдер: Ollama или LM Studio для локальных моделей, либо Codex, Claude Code или OpenCode, если они у вас уже есть.',
-    'faq.4.q': 'Какие модели можно запускать?',
-    'faq.4.a': 'Любые, которые отдаёт выбранный провайдер. Для Ollama это Llama, Mistral, Gemma, Qwen и остальная <a href="https://ollama.com/library">библиотека Ollama</a>.',
-    'faq.5.q': 'Код открытый?',
-    'faq.5.a': 'Да. Он лежит на <a href="https://github.com/arduradiokot/fllama">GitHub</a> под GPL v2.0.',
-    'faq.6.q': 'Чем чат отличается от проекта?',
-    'faq.6.a': 'Чат: разговор. Проект прикрепляет папку, чтобы агент мог читать и править файлы внутри неё. У OpenCode свои инструменты; Fllama второй набор сверху не навешивает.',
-    'dl.title': 'Скачать Fllama',
-    'dl.lead': 'Версия 1.0.0 для Windows, macOS и Linux. GPL v2.0, бесплатно дома и на работе.',
-    'dl.win': 'Установщик для Windows 10 и 11, x64.',
-    'dl.mac': 'macOS 11+, Intel и Apple Silicon.',
-    'dl.linux': 'AppImage и deb для x64.',
-    'dl.btn': 'Скачать',
-    'cta.win': 'Windows',
-    'cta.mac': 'macOS',
-    'cta.linux': 'Linux',
-    'foot.license': 'GPL v2.0',
-    'foot.releases': 'Релизы'
+  "es": {
+    "skip": "Saltar al contenido",
+    "navigation": "Navegación principal",
+    "navPreview": "Interfaz",
+    "navWorkflow": "Flujo de trabajo",
+    "navDownload": "Descargas",
+    "heroTitle": "Ejecuta agentes de programación en paralelo.",
+    "heroBody": "Asigna un agente y un worktree de Git a cada tarea. Cambia entre ejecuciones, revisa cambios y transfiere tareas desde un mismo espacio de trabajo.",
+    "getFllama": "Descargar Fllama",
+    "seePreview": "Ver la interfaz",
+    "previewLabel": "Vista previa interactiva",
+    "projects": "Proyecto",
+    "demoTasks": "Tareas de ejemplo",
+    "demoViews": "Vista de la tarea",
+    "searchName": "Mejorar la búsqueda",
+    "testsName": "Añadir pruebas del analizador",
+    "runTab": "Ejecución",
+    "diffTab": "Cambios",
+    "runComplete": "Ejecución completada",
+    "sampleData": "Proyecto de ejemplo",
+    "caption": "Cambia de tarea o abre «Cambios» para ver el diff de su worktree.",
+    "providerTitle": "Agentes y modelos",
+    "cliList": "Agentes",
+    "providerList": "Proveedores de modelos",
+    "workflowTitle": "Una rama para cada tarea.",
+    "workflowIntro": "Un worktree de Git crea una copia independiente a partir del commit actual. Así, los agentes pueden editar archivos a la vez.",
+    "workflow1Title": "Abrir un proyecto",
+    "workflow1Body": "Elige una carpeta local y selecciona un agente y un modelo para la tarea.",
+    "workflow2Title": "Revisar los cambios",
+    "workflow2Body": "Consulta el diff de Git, abre archivos y sigue el progreso.",
+    "workflow3Title": "Transferir la tarea",
+    "workflow3Body": "Otro agente recibe la conversación y acceso a la misma copia de trabajo.",
+    "downloadNotice": "Los instaladores de v1.0.0 incluyen el chat para Ollama. Arriba se muestra el nuevo espacio de trabajo para agentes.",
+    "macFormat": "Imagen de disco",
+    "installer": "Instalador",
+    "allReleases": "Todas las versiones",
+    "sourceTitle": "Ejecutar desde el código fuente",
+    "sourceBody": "Necesitas Git y Node.js para ejecutar la versión del repositorio.",
+    "terminal": "Terminal",
+    "copy": "Copiar",
+    "browseSource": "Abrir el repositorio",
+    "faqTitle": "Preguntas frecuentes",
+    "faq1Question": "¿Puedo ejecutar modelos de forma local?",
+    "faq1Answer": "Sí. Inicia Ollama o LM Studio y elige un modelo instalado. Los proveedores en la nube pueden recibir el contexto de la tarea.",
+    "faq2Question": "¿Qué ocurre con los cambios sin commit?",
+    "faq2Answer": "Se quedan en la copia de trabajo original. El nuevo worktree parte del commit actual. Selecciona «Carpeta del proyecto» para trabajar con los archivos actuales.",
+    "faq3Question": "¿Cómo combino las ramas?",
+    "faq3Answer": "Revisa el diff en Fllama y combina las ramas con Git.",
+    "footerFaq": "Preguntas frecuentes"
   }
 };
 
-const STEPS = [
-  {
-    cap: 's1.cap',
-    label: 'ui.model',
-    value: 'gemma3:4b',
-    items: ['gemma3:4b', 'qwen3:8b', 'llama3.1:8b']
+const tasks = {
+  search: {
+    name: 'searchName', agent: 'Codex CLI', branch: 'fllama/search', file: 'src/search.ts',
+    prompt: ['Make search ignore surrounding whitespace.', 'Игнорируй пробелы по краям поискового запроса.', 'Ignoriere Leerzeichen am Rand der Suchanfrage.', 'Ignora los espacios al principio y al final de la consulta.'],
+    detail: ['Normalized the query before matching and added a regression test.', 'Добавлена нормализация запроса и тест на регрессию.', 'Die Suchanfrage wurde normalisiert und ein Regressionstest hinzugefügt.', 'Se normalizó la consulta y se añadió una prueba de regresión.'],
+    before: 'const query = input.toLowerCase()',
+    after: 'const query = input.trim().toLowerCase()',
   },
-  {
-    cap: 's2.cap',
-    label: 'ui.chat',
-    value: 'gemma3:4b',
-    items: ['Where does this conversation go?', 'It stays here.']
+  tests: {
+    name: 'testsName', agent: 'Claude Code CLI', branch: 'fllama/parser-tests', file: 'src/parser.test.ts',
+    prompt: ['Add a parser test for empty input.', 'Добавь тест парсера для пустого ввода.', 'Teste den Parser mit leerer Eingabe.', 'Añade una prueba del analizador para una entrada vacía.'],
+    detail: ['Added a regression test for an empty input string.', 'Добавлен тест на случай пустой входной строки.', 'Ein Regressionstest für leere Eingaben wurde hinzugefügt.', 'Se añadió una prueba de regresión para una entrada vacía.'],
+    before: '',
+    after: "expect(parse('')).toEqual([])",
   },
-  {
-    cap: 's3.cap',
-    label: 'ui.project',
-    value: '/Users/you/notes',
-    items: ['README.md', 'src/main.js', 'locales/en.json']
-  },
-  {
-    cap: 's4.cap',
-    label: 'ui.project',
-    value: 'agent',
-    items: ['read README.md', 'patch src/main.js', 'stay in /Users/you/notes']
-  }
-];
+};
 
-function applyI18n(lang) {
-  const t = I18N[lang] || I18N.en;
-  document.documentElement.lang = lang;
-  document.querySelectorAll('[data-i18n]').forEach((el) => {
-    const v = t[el.getAttribute('data-i18n')];
-    if (v) el.textContent = v;
-  });
-  document.querySelectorAll('[data-i18n-html]').forEach((el) => {
-    const v = t[el.getAttribute('data-i18n-html')];
-    if (v) el.innerHTML = v;
-  });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
-    const v = t[el.getAttribute('data-i18n-placeholder')];
-    if (v) el.setAttribute('placeholder', v);
-  });
-  const toggle = document.getElementById('languageToggle');
-  if (toggle) toggle.textContent = lang === 'en' ? 'RU' : 'EN';
-  const on = document.querySelector('.how-btn.is-on');
-  if (on) setStep(Number(on.getAttribute('data-step')), lang);
+const all = (selector) => [...document.querySelectorAll(selector)];
+const $ = (id) => document.getElementById(id);
+const localized = all('[data-t]');
+const labels = all('[data-a]');
+const english = Object.fromEntries(localized.map((node) => [node.dataset.t, node.textContent]));
+const englishLabels = Object.fromEntries(labels.map((node) => [node.dataset.a, node.getAttribute('aria-label')]));
+const taskButtons = all('[data-task]');
+const viewButtons = all('[data-view]');
+const languageSelect = $('switch-language');
+const localeOptions = {
+  en: { index: 0, title: 'Workspace for coding agents', label: 'Language', copied: 'Commands copied.', copyFailed: 'Select and copy the commands manually.' },
+  ru: { index: 1, title: 'Рабочее пространство для ИИ-агентов', label: 'Язык', copied: 'Команды скопированы.', copyFailed: 'Выделите и скопируйте команды вручную.' },
+  de: { index: 2, title: 'Arbeitsbereich für Coding-Agenten', label: 'Sprache', copied: 'Befehle kopiert.', copyFailed: 'Markiere und kopiere die Befehle manuell.' },
+  es: { index: 3, title: 'Espacio para agentes de programación', label: 'Idioma', copied: 'Comandos copiados.', copyFailed: 'Selecciona y copia los comandos manualmente.' },
+};
+const dictionaries = { en: english, ru, ...otherLocales };
+const copyButton = $('copy-command');
+const feedback = $('copy-feedback');
+let taskId = 'search';
+let view = 'run';
+let locale = 'en';
+let feedbackTimeout;
+
+function renderDemo() {
+  const task = tasks[taskId];
+  const languageIndex = localeOptions[locale].index;
+  $('demo-title').textContent = dictionaries[locale][task.name];
+  $('demo-branch').textContent = task.branch;
+  $('demo-agent').textContent = task.agent;
+  $('demo-prompt').textContent = task.prompt[languageIndex];
+  $('demo-detail').textContent = task.detail[languageIndex];
+  $('demo-file').textContent = task.file;
+  $('demo-before').textContent = task.before ? '− ' + task.before : '';
+  $('demo-before').hidden = !task.before;
+  $('demo-after').textContent = '+ ' + task.after;
+  $('demo-diff').hidden = view !== 'diff';
+  $('demo-run').hidden = view !== 'run';
+  taskButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.task === taskId)));
+  viewButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
 }
 
-function setStep(index, lang) {
-  const t = I18N[lang || document.documentElement.lang] || I18N.en;
-  const step = STEPS[index] || STEPS[0];
-  const cap = document.getElementById('step-caption');
-  const value = document.getElementById('step-value');
-  const label = document.getElementById('step-label');
-  const list = document.getElementById('step-list');
-  if (cap) cap.textContent = t[step.cap];
-  if (value) value.textContent = step.value;
-  if (label) label.textContent = t[step.label] || step.label;
-  if (list) {
-    list.replaceChildren(...step.items.map((item, i) => {
-      const li = document.createElement('li');
-      if (i === 0) li.className = 'is-on';
-      li.textContent = item;
-      return li;
-    }));
-  }
-  document.querySelectorAll('.how-btn').forEach((el, i) => {
-    const on = i === index;
-    el.classList.toggle('is-on', on);
-    el.setAttribute('aria-selected', on ? 'true' : 'false');
-  });
+function applyLanguage(next) {
+  locale = next;
+  const details = localeOptions[locale];
+  document.documentElement.lang = locale;
+  document.title = 'Fllama: ' + details.title;
+  localized.forEach((node) => { node.textContent = dictionaries[locale][node.dataset.t] || english[node.dataset.t]; });
+  labels.forEach((node) => { node.setAttribute('aria-label', dictionaries[locale][node.dataset.a] || englishLabels[node.dataset.a]); });
+  languageSelect.value = locale;
+  languageSelect.setAttribute('aria-label', details.label);
+  feedback.hidden = true;
+  renderDemo();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  let lang = localStorage.getItem('language') || 'en';
-  if (lang !== 'en' && lang !== 'ru') lang = 'en';
-  applyI18n(lang);
-
-  document.getElementById('languageToggle').addEventListener('click', () => {
-    lang = lang === 'en' ? 'ru' : 'en';
-    localStorage.setItem('language', lang);
-    applyI18n(lang);
-  });
-
-  document.querySelectorAll('.ui-mode').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.ui-mode').forEach((b) => b.classList.toggle('is-on', b === btn));
-      const project = btn.getAttribute('data-mode') === 'project';
-      document.getElementById('live-thread').hidden = project;
-      document.getElementById('live-form').hidden = project;
-      document.getElementById('live-project').hidden = !project;
-    });
-  });
-
-  document.querySelectorAll('.ui-thought-toggle').forEach((btn) => {
-    btn.addEventListener('click', () => btn.parentElement.classList.toggle('is-open'));
-  });
-
-  document.querySelectorAll('.ui-menu button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      btn.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('is-on', b === btn));
-    });
-  });
-
-  const form = document.getElementById('live-form');
-  const input = document.getElementById('live-input');
-  const thread = document.getElementById('live-thread');
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const text = (input.value || '').trim();
-    if (!text) return;
-    const user = document.createElement('div');
-    user.className = 'ui-user';
-    user.textContent = text;
-    const ai = document.createElement('div');
-    ai.className = 'ui-ai';
-    ai.textContent = (I18N[lang] || I18N.en)['demo.reply'];
-    thread.append(user, ai);
-    input.value = '';
-    thread.scrollTop = thread.scrollHeight;
-  });
-
-  document.querySelectorAll('.how-btn').forEach((btn) => {
-    btn.addEventListener('click', () => setStep(Number(btn.getAttribute('data-step')), lang));
-  });
-
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduce && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-in');
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
-    document.querySelectorAll('.hero-copy h1, .hero-copy .lead, .hero-cta, .feat, .how-grid, .faq details, .dl-row').forEach((el) => io.observe(el));
+const queryLanguage = new URLSearchParams(location.search).get('lang');
+let savedLanguage;
+try { savedLanguage = localStorage.getItem('fllama-site-lang'); } catch {}
+function preferredLocale(...values) {
+  for (const value of values) {
+    const code = value?.toLowerCase().split('-')[0];
+    if (Object.hasOwn(localeOptions, code)) return code;
   }
+  return 'en';
+}
+applyLanguage(preferredLocale(queryLanguage, savedLanguage, ...(navigator.languages || [navigator.language])));
+
+languageSelect.hidden = false;
+languageSelect.addEventListener('change', () => {
+  applyLanguage(languageSelect.value);
+  try { localStorage.setItem('fllama-site-lang', locale); } catch {}
+  const url = new URL(location.href);
+  url.searchParams.set('lang', locale);
+  history.replaceState(null, '', url);
 });
+
+for (const button of taskButtons) {
+  button.disabled = false;
+  button.addEventListener('click', () => { taskId = button.dataset.task; renderDemo(); });
+}
+for (const button of viewButtons) {
+  button.disabled = false;
+  button.addEventListener('click', () => { view = button.dataset.view; renderDemo(); });
+}
+
+if (navigator.clipboard?.writeText) {
+  copyButton.hidden = false;
+  copyButton.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText($('install-command').textContent);
+      feedback.textContent = localeOptions[locale].copied;
+    } catch {
+      feedback.textContent = localeOptions[locale].copyFailed;
+    }
+    feedback.hidden = false;
+    clearTimeout(feedbackTimeout);
+    feedbackTimeout = setTimeout(() => { feedback.hidden = true; }, 4000);
+  });
+}

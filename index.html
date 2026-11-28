@@ -1,234 +1,168 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fllama: local chat for models on this computer</title>
-  <meta name="description" content="Fllama is a desktop chat and project client for Ollama, LM Studio, Codex, Claude Code and OpenCode. The conversation stays on the machine.">
-  <link rel="icon" type="image/png" href="icon/icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#141916">
+  <meta name="description" content="Run coding agents in parallel and review their changes in one desktop workspace.">
+  <meta property="og:title" content="Fllama - Workspace for coding agents">
+  <meta property="og:description" content="Run coding agents in parallel and review their changes in one desktop workspace.">
+  <meta property="og:image" content="https://arduradiokot.github.io/Fllama/assets/fllama.png">
+  <meta property="og:type" content="website">
+  <title>Fllama - Workspace for coding agents</title>
+  <link rel="canonical" href="https://arduradiokot.github.io/Fllama/">
+  <link rel="icon" type="image/png" href="assets/fllama.png">
   <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
-
-  <header class="top">
-    <a class="brand" href="#main">
-      <img src="icon/icon.png" width="36" height="36" alt="">
-      Fllama
-    </a>
-    <nav class="nav-links" aria-label="Page">
-      <a href="#features" data-i18n="nav.features">What it does</a>
-      <a href="#how" data-i18n="nav.how">How it runs</a>
-      <a href="#faq" data-i18n="nav.faq">Questions</a>
-    </nav>
-    <div class="top-end">
-      <a class="link" href="https://github.com/arduradiokot/fllama">GitHub</a>
-      <button type="button" class="lang" id="languageToggle" aria-label="Switch language">RU</button>
-      <a class="button" href="#download" data-i18n="nav.download">Download</a>
+  <a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top"><img src="assets/fllama.png" alt="" width="36" height="36">Fllama</a>
+      <nav class="nav" aria-label="Main navigation" data-a="navigation">
+        <a href="#preview" data-t="navPreview">Workspace</a>
+        <a href="#workflow" data-t="navWorkflow">Workflow</a>
+        <a href="#download" data-t="navDownload">Downloads</a>
+      </nav>
+      <div class="header-actions">
+        <select class="language" id="switch-language" aria-label="Language" hidden>
+          <option value="en" lang="en">English</option><option value="ru" lang="ru">Русский</option>
+          <option value="de" lang="de">Deutsch</option><option value="es" lang="es">Español</option>
+        </select>
+        <a class="header-source" href="https://github.com/ArduRadioKot/Fllama">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
     </div>
   </header>
-
   <main id="main">
-    <section class="hero" id="hero">
+    <section class="hero wrap" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <h1>
-          <span data-i18n="hero.l1">Chat stays</span>
-          <span data-i18n="hero.l2">on this machine.</span>
-        </h1>
-        <p class="lead" data-i18n="hero.sub">Desktop client for Ollama, LM Studio, Codex, Claude Code and OpenCode. Nothing is sent to us.</p>
-        <div class="hero-cta">
-          <a class="button" href="#download" data-i18n="hero.download">Download Fllama</a>
-          <a class="link" href="https://github.com/arduradiokot/fllama" data-i18n="hero.source">Source on GitHub</a>
+        <h1 id="hero-title" data-t="heroTitle">Run coding agents in parallel.</h1>
+        <p data-t="heroBody">Give each task its own agent and Git worktree. Switch between active runs, inspect file changes, and hand work off from one desktop workspace.</p>
+        <div class="hero-links">
+          <a class="button" href="#download"><span data-t="getFllama">Get Fllama</span><span aria-hidden="true">↓</span></a>
+          <a class="text-link" href="#preview"><span data-t="seePreview">Explore the workspace</span><span aria-hidden="true">↗</span></a>
         </div>
       </div>
-      <div class="hero-stage">
-        <div class="ui-chat" data-ui id="live-chat">
-          <div class="ui-bar">
-            <button type="button" class="ui-mode is-on" data-mode="chat" data-i18n="ui.chat">Chat</button>
-            <button type="button" class="ui-mode" data-mode="project" data-i18n="ui.project">Project</button>
-            <span class="ui-model">gemma3:4b</span>
+      <figure class="showcase" id="preview">
+        <div class="showcase-window">
+          <div class="window-bar">
+            <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="window-brand"><img src="assets/fllama.png" alt="" width="20" height="20">Fllama</span>
+            <span class="preview-tag" data-t="previewLabel">Interactive preview</span>
           </div>
-          <div class="ui-thread" id="live-thread">
-            <div class="ui-user" data-i18n="demo.user">Where does this conversation go?</div>
-            <div class="ui-thought is-open">
-              <button type="button" class="ui-thought-toggle" data-i18n="ui.thoughts">Thoughts</button>
-              <p data-i18n="demo.think">Fllama is a local Electron client. The reply comes from a model on this computer. There is no Fllama cloud.</p>
+          <div class="window-body">
+            <div class="preview-sidebar">
+              <span class="mini-label" data-t="projects">Project</span>
+              <span class="demo-project"><span class="folder-icon" aria-hidden="true"></span>Atlas</span>
+              <div class="demo-tasks" role="group" aria-label="Example tasks" data-a="demoTasks">
+                <button type="button" class="demo-task" data-task="search" aria-pressed="true" disabled>
+                  <span class="task-dot" aria-hidden="true"></span>
+                  <span class="task-ident"><strong data-t="searchName">Improve search</strong><small>Codex CLI</small></span>
+                </button>
+                <button type="button" class="demo-task" data-task="tests" aria-pressed="false" disabled>
+                  <span class="task-dot alternate" aria-hidden="true"></span>
+                  <span class="task-ident"><strong data-t="testsName">Add parser tests</strong><small>Claude Code CLI</small></span>
+                </button>
+              </div>
             </div>
-            <div class="ui-ai" data-i18n="demo.ai">It stays here. Fllama does not collect chats. The model you picked answers on this computer.</div>
-            <div class="ui-user" data-i18n="demo.user2">Can it edit files?</div>
-            <div class="ui-ai" data-i18n="demo.ai2">Switch to Project and open a folder. Chat will not touch the disk.</div>
-          </div>
-          <form class="ui-compose" id="live-form">
-            <label class="sr-only" for="live-input" data-i18n="ui.message">Message</label>
-            <input id="live-input" type="text" autocomplete="off" data-i18n-placeholder="ui.placeholder" placeholder="Ask the local model">
-            <button type="submit" data-i18n="ui.send">Send</button>
-          </form>
-          <div class="ui-project" id="live-project" hidden>
-            <p class="ui-path">/Users/you/notes</p>
-            <ul class="ui-tree">
-              <li>README.md</li>
-              <li>src/main.js</li>
-              <li>src/renderer.js</li>
-              <li>locales/en.json</li>
-              <li>locales/ru.json</li>
-            </ul>
-            <p class="ui-note" data-i18n="ui.projectNote">The agent may read and edit files in this folder. Chat mode does not.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="island" id="features">
-      <h2 data-i18n="features.title">What it does</h2>
-      <div class="feat-grid">
-        <article class="feat">
-          <h3 data-i18n="f1.title">Five providers, one window</h3>
-          <p data-i18n="f1.body">Ollama and LM Studio stay on the computer. Codex, Claude Code and OpenCode join through the same settings.</p>
-          <div class="ui-menu" data-ui>
-            <button type="button" class="is-on">Ollama</button>
-            <button type="button">LM Studio</button>
-            <button type="button">Codex</button>
-            <button type="button">Claude Code</button>
-            <button type="button">OpenCode</button>
-          </div>
-        </article>
-        <article class="feat">
-          <h3 data-i18n="f2.title">Chat talks. Project works.</h3>
-          <p data-i18n="f2.body">Chat is a thread with a model. Project points at a folder: the agent may list, read and edit files inside it, and nothing above it.</p>
-          <div class="ui-app" data-ui>
-            <div class="ui-side">
-              <span class="ui-mark">F</span>
-              <span class="ui-side-on" data-i18n="ui.chat">Chat</span>
-              <span data-i18n="ui.project">Project</span>
-            </div>
-            <div class="ui-ghost">
-              <span class="ui-user" data-i18n="demo.user2">Can it edit files?</span>
-              <span class="ui-ai" data-i18n="ghost.ai">Only in Project.</span>
+            <div class="preview-main">
+              <header class="preview-heading"><span class="crumb" id="demo-branch">fllama/search</span><h2 id="demo-title">Improve search</h2></header>
+              <div class="view-buttons" role="group" aria-label="Task view" data-a="demoViews">
+                <button type="button" data-view="run" aria-pressed="true" data-t="runTab" disabled>Run</button>
+                <button type="button" data-view="diff" aria-pressed="false" data-t="diffTab" disabled>Changes</button>
+              </div>
+              <div class="preview-output" id="demo-run">
+                <p class="demo-prompt" id="demo-prompt">Make search ignore surrounding whitespace.</p>
+                <div class="demo-result"><span class="task-dot" aria-hidden="true"></span><div><strong data-t="runComplete">Run complete</strong><p id="demo-detail">Normalized the query before matching and added a regression test.</p></div></div>
+              </div>
+              <div class="preview-output" id="demo-diff" hidden>
+                <p class="demo-file" id="demo-file">src/search.ts</p>
+                <pre><code><span id="demo-before" class="removed">− const query = input.toLowerCase()</span>
+<span id="demo-after" class="added">+ const query = input.trim().toLowerCase()</span></code></pre>
+              </div>
             </div>
           </div>
-        </article>
-        <article class="feat feat-wide">
-          <div>
-            <h3 data-i18n="f3.title">Answers as Markdown</h3>
-            <p data-i18n="f3.body">Headings, lists, tables, fences and tasks render in the thread. Thoughts stay folded until you open them.</p>
-          </div>
-          <div class="ui-md" data-ui>
-            <table>
-              <thead><tr><th>Name</th><th>Size</th><th>Type</th></tr></thead>
-              <tbody>
-                <tr><td>gemma3:4b</td><td>3.3 GB</td><td>base</td></tr>
-                <tr><td>qwen3:8b</td><td>5.2 GB</td><td>base</td></tr>
-                <tr><td>llama3.1:8b</td><td>4.9 GB</td><td>base</td></tr>
-                <tr><td>deepseek-r1:7b</td><td>4.7 GB</td><td>base</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="island" id="how">
-      <h2 data-i18n="how.title">How it runs</h2>
-      <div class="how-grid">
-        <div class="how-nav" role="tablist">
-          <button type="button" class="how-btn is-on" data-step="0" role="tab" aria-selected="true">
-            <strong data-i18n="s1.a">Pick a model</strong>
-            <span data-i18n="s1.b">already on disk</span>
-          </button>
-          <button type="button" class="how-btn" data-step="1" role="tab" aria-selected="false">
-            <strong data-i18n="s2.a">Ask from the</strong>
-            <span data-i18n="s2.b">chat island</span>
-          </button>
-          <button type="button" class="how-btn" data-step="2" role="tab" aria-selected="false">
-            <strong data-i18n="s3.a">Open the folder</strong>
-            <span data-i18n="s3.b">the work lives in</span>
-          </button>
-          <button type="button" class="how-btn" data-step="3" role="tab" aria-selected="false">
-            <strong data-i18n="s4.a">Let the agent</strong>
-            <span data-i18n="s4.b">edit the files</span>
-          </button>
+          <div class="window-footer"><span data-t="sampleData">Sample project</span><span id="demo-agent">Codex CLI</span></div>
         </div>
-        <div class="how-panel" data-ui id="step-ui">
-          <div class="ui-pick" id="step-pick">
-            <span id="step-label" data-i18n="ui.model">Model</span>
-            <strong id="step-value">gemma3:4b</strong>
+        <figcaption data-t="caption">Switch tasks or open Changes to see the diff for each worktree.</figcaption>
+      </figure>
+    </section>
+
+    <section class="providers wrap" aria-labelledby="provider-title">
+      <h2 id="provider-title" data-t="providerTitle">Supported agents and models</h2>
+      <div class="integration-groups">
+        <ul aria-label="Agents" data-a="cliList"><li>Codex CLI</li><li>Claude Code CLI</li><li>OpenCode</li><li>Kiro</li><li>Hermes Agent</li><li>Cline</li><li>Roo Code</li><li>Gemini CLI</li><li>Kilo Code CLI</li></ul>
+        <ul aria-label="Model providers" data-a="providerList"><li>Ollama</li><li>LM Studio</li><li>OpenRouter</li><li>Gemini API</li><li>DeepSeek</li><li>Groq</li><li>xAI</li><li>Mistral</li><li>OpenAI</li><li>Anthropic API</li><li>Kilo Gateway</li><li>OpenAI-compatible</li></ul>
+      </div>
+    </section>
+
+    <section class="workflow wrap" id="workflow" aria-labelledby="workflow-title">
+      <div class="section-intro">
+        <h2 id="workflow-title" data-t="workflowTitle">Give each task its own branch.</h2>
+        <p data-t="workflowIntro">A Git worktree gives a task its own checkout from the current commit. Agents on separate worktrees can edit files at the same time.</p>
+      </div>
+      <div class="workflow-list">
+        <article class="workflow-row"><span class="step-icon" aria-hidden="true">⌁</span><div><h3 data-t="workflow1Title">Open a project</h3><p data-t="workflow1Body">Pick a local folder, then select an agent and a model for the task.</p></div></article>
+        <article class="workflow-row"><span class="step-icon" aria-hidden="true">≡</span><div><h3 data-t="workflow2Title">Review the diff</h3><p data-t="workflow2Body">Inspect changes, open files, and follow the run log while agents work.</p></div></article>
+        <article class="workflow-row"><span class="step-icon" aria-hidden="true">↗</span><div><h3 data-t="workflow3Title">Hand off the work</h3><p data-t="workflow3Body">Give another agent the conversation and access to the same checkout for a follow-up.</p></div></article>
+      </div>
+    </section>
+
+    <section class="installation" id="download" aria-labelledby="download-title">
+      <div class="wrap">
+        <div class="section-intro download-intro">
+          <h2 id="download-title" data-t="getFllama">Get Fllama</h2>
+          <p data-t="downloadNotice">The published installers are v1.0.0, the Ollama chat release. The preview above shows the redesigned agent workspace.</p>
+        </div>
+        <div class="install-grid">
+          <div class="release-list">
+            <div class="release-row">
+              <div><h3>macOS</h3><small data-t="macFormat">Disk image</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0-arm64.dmg">Apple Silicon <span aria-hidden="true">↓</span></a><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0.dmg">Intel <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <div class="release-row">
+              <div><h3>Windows</h3><small>x64</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama.Setup.1.0.0.exe"><span data-t="installer">Installer</span> <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <div class="release-row">
+              <div><h3>Linux</h3><small>x64</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0.AppImage">AppImage <span aria-hidden="true">↓</span></a><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama_1.0.0_amd64.deb">.deb <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <a class="text-link release-link" href="https://github.com/ArduRadioKot/Fllama/releases"><span data-t="allReleases">All releases</span><span aria-hidden="true">↗</span></a>
           </div>
-          <ul class="ui-tree" id="step-list">
-            <li class="is-on">gemma3:4b</li>
-            <li>qwen3:8b</li>
-            <li>llama3.1:8b</li>
-          </ul>
-          <p id="step-caption" data-i18n="s1.cap">Installed models appear in the list. Fllama does not download them unless you ask Ollama to.</p>
+          <div class="source-card">
+            <h3 data-t="sourceTitle">Run from source</h3>
+            <p data-t="sourceBody">Use Git and Node.js to run the version currently in the repository.</p>
+            <div class="terminal">
+              <div class="terminal-bar"><span data-t="terminal">Terminal</span><button type="button" id="copy-command" data-t="copy" hidden>Copy</button></div>
+              <pre id="install-command"><code>git clone https://github.com/ArduRadioKot/Fllama.git
+cd Fllama/src
+npm ci
+npm start</code></pre>
+            </div>
+            <p class="copy-feedback" id="copy-feedback" role="status" hidden></p>
+            <a class="text-link" href="https://github.com/ArduRadioKot/Fllama"><span data-t="browseSource">Browse the repository</span><span aria-hidden="true">↗</span></a>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="faq" id="faq">
-      <h2 data-i18n="faq.title">Questions</h2>
-      <div class="faq-list">
-        <details name="faq" open>
-          <summary data-i18n="faq.1.q">Does Fllama collect any data?</summary>
-          <p data-i18n="faq.1.a">No. Chats and project files stay on the machine. Fllama has no telemetry and no account.</p>
-        </details>
-        <details name="faq">
-          <summary data-i18n="faq.2.q">Can I use it at work?</summary>
-          <p data-i18n="faq.2.a">Yes. It is free for personal use and for internal use at a company. Read the GPL v2.0 licence for the exact terms.</p>
-        </details>
-        <details name="faq">
-          <summary data-i18n="faq.3.q">What has to be installed?</summary>
-          <p data-i18n="faq.3.a">Fllama itself, plus the provider you want: Ollama or LM Studio for local models, or Codex, Claude Code or OpenCode if you already use those.</p>
-        </details>
-        <details name="faq">
-          <summary data-i18n="faq.4.q">Which models can I run?</summary>
-          <p data-i18n-html="faq.4.a">Any model the chosen provider serves. For Ollama that includes Llama, Mistral, Gemma, Qwen and the rest of the <a href="https://ollama.com/library">Ollama library</a>.</p>
-        </details>
-        <details name="faq">
-          <summary data-i18n="faq.5.q">Is the code open?</summary>
-          <p data-i18n-html="faq.5.a">Yes. It lives on <a href="https://github.com/arduradiokot/fllama">GitHub</a> under GPL v2.0.</p>
-        </details>
-        <details name="faq">
-          <summary data-i18n="faq.6.q">What is the difference between Chat and Project?</summary>
-          <p data-i18n="faq.6.a">Chat is a conversation. Project attaches a folder so the agent can read and edit files inside it. OpenCode already has its own tools; Fllama does not stack a second set on top.</p>
-        </details>
-      </div>
-    </section>
-
-    <section class="download" id="download">
-      <h2 data-i18n="dl.title">Download Fllama</h2>
-      <p class="dl-lead" data-i18n="dl.lead">Version 1.0.0 for Windows, macOS and Linux. GPL v2.0, free for home and for work.</p>
-      <div class="dl-list">
-        <a class="dl-row" href="https://github.com/arduradiokot/fllama/releases">
-          <h3 data-i18n="cta.win">Windows</h3>
-          <p data-i18n="dl.win">Windows 10 and 11, x64 installer.</p>
-          <span class="button" data-i18n="dl.btn">Download</span>
-        </a>
-        <a class="dl-row" href="https://github.com/arduradiokot/fllama/releases">
-          <h3 data-i18n="cta.mac">macOS</h3>
-          <p data-i18n="dl.mac">macOS 11+, Intel and Apple Silicon.</p>
-          <span class="button" data-i18n="dl.btn">Download</span>
-        </a>
-        <a class="dl-row" href="https://github.com/arduradiokot/fllama/releases">
-          <h3 data-i18n="cta.linux">Linux</h3>
-          <p data-i18n="dl.linux">AppImage and deb for x64.</p>
-          <span class="button" data-i18n="dl.btn">Download</span>
-        </a>
+    <section class="faq wrap" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title" data-t="faqTitle">Common questions</h2>
+      <div>
+        <details><summary data-t="faq1Question">Can I run models locally?</summary><p data-t="faq1Answer">Yes. Start Ollama or LM Studio and select an installed model. Cloud providers and hosted CLI backends can send the selected task’s context to their services.</p></details>
+        <details><summary data-t="faq2Question">What happens to uncommitted changes?</summary><p data-t="faq2Answer">They stay in the original checkout. A new worktree starts from the committed snapshot. Choose Project folder to work with the files already in that checkout.</p></details>
+        <details><summary data-t="faq3Question">How do I merge the branches?</summary><p data-t="faq3Answer">Inspect the diff in Fllama, then merge the branch with Git when you are satisfied with the change.</p></details>
       </div>
     </section>
   </main>
-
-  <footer>
-    <p class="foot-who">Fllama</p>
-    <p class="foot-links">
-      <a href="https://github.com/arduradiokot/fllama">GitHub</a>
-      <a href="LICENSE" data-i18n="foot.license">GPL v2.0</a>
-      <a href="https://github.com/arduradiokot/fllama/releases" data-i18n="foot.releases">Releases</a>
-    </p>
-    <p class="foot-year">2026</p>
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <a class="brand" href="#top"><img src="assets/fllama.png" alt="" width="28" height="28">Fllama</a>
+      <div><a href="#faq" data-t="footerFaq">FAQ</a><a href="https://github.com/ArduRadioKot/Fllama">GitHub</a><a href="https://github.com/ArduRadioKot/Fllama/blob/main/LICENSE">GPL v2.0</a></div>
+    </div>
   </footer>
-
-  <script src="main.js"></script>
 </body>
 </html>
