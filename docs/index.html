@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#141916">
+  <meta name="description" content="Run coding agents in parallel and review their changes in one desktop workspace.">
+  <meta property="og:title" content="Fllama - Workspace for coding agents">
+  <meta property="og:description" content="Run coding agents in parallel and review their changes in one desktop workspace.">
+  <meta property="og:image" content="https://arduradiokot.github.io/Fllama/assets/fllama.png">
+  <meta property="og:type" content="website">
+  <title>Fllama - Workspace for coding agents</title>
+  <link rel="canonical" href="https://arduradiokot.github.io/Fllama/">
+  <link rel="icon" type="image/png" href="assets/fllama.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+  <header class="site-header" id="top">
+    <div class="wrap header-inner">
+      <a class="brand" href="#top"><img src="assets/fllama.png" alt="" width="36" height="36">Fllama</a>
+      <nav class="nav" aria-label="Main navigation" data-a="navigation">
+        <a href="#screenshots" data-t="navPreview">Workspace</a>
+        <a href="#workflow" data-t="navWorkflow">Workflow</a>
+        <a href="#download" data-t="navDownload">Downloads</a>
+      </nav>
+      <div class="header-actions">
+        <select class="language" id="switch-language" aria-label="Language" hidden>
+          <option value="en" lang="en">English</option><option value="ru" lang="ru">Русский</option>
+          <option value="de" lang="de">Deutsch</option><option value="es" lang="es">Español</option>
+        </select>
+        <a class="header-source" href="https://github.com/ArduRadioKot/Fllama">GitHub <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy wrap">
+        <h1 id="hero-title" data-t="heroTitle">Run agents in parallel.</h1>
+        <p data-t="heroBody">Run coding agents in separate Git worktrees, then switch tasks and inspect their changes in one workspace.</p>
+        <div class="hero-links">
+          <a class="button" href="#download"><span data-t="getFllama">Get Fllama</span><span aria-hidden="true">↓</span></a>
+          <a class="text-link" href="#screenshots"><span data-t="seePreview">See the workspace</span><span aria-hidden="true">↓</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="screenshots wrap" id="screenshots" aria-labelledby="screenshots-title">
+      <div class="section-intro">
+        <h2 id="screenshots-title" data-t="screenshotsTitle">Inside Fllama</h2>
+        <p data-t="screenshotsIntro">Screenshots of the Fllama 2.0 development build on macOS, using a sample project.</p>
+      </div>
+      <figure class="product-shot product-shot-main">
+        <a href="assets/workspace.jpg"><img src="assets/workspace.jpg" width="1320" height="860" loading="lazy" alt="Fllama with a project, task composer, and run inspector" data-alt="workspaceAlt"></a>
+        <figcaption data-t="workspaceCaption">Projects and tasks on the left, the composer in the center, and run details on the right.</figcaption>
+      </figure>
+      <div class="product-shot-grid">
+        <figure class="product-shot product-shot-detail product-shot-changes">
+          <a href="assets/git-changes.jpg"><img src="assets/git-changes.jpg" width="1320" height="860" loading="lazy" alt="Fllama Changes inspector showing a file and its Git diff" data-alt="changesAlt"></a>
+          <figcaption data-t="changesCaption">Changes shows modified files and the Git diff for the selected file.</figcaption>
+        </figure>
+        <figure class="product-shot product-shot-detail product-shot-providers">
+          <a href="assets/providers.jpg"><img src="assets/providers.jpg" width="1320" height="860" loading="lazy" alt="Fllama settings with model provider configuration" data-alt="providersAlt"></a>
+          <figcaption data-t="providersCaption">Provider settings for connecting local model servers and APIs.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <figure class="showcase wrap" id="preview">
+      <div class="showcase-window" data-ui>
+        <div class="window-body">
+          <div class="preview-sidebar">
+            <span class="demo-project"><img src="assets/fllama.png" alt="" width="24" height="24">Fllama</span>
+            <div class="demo-tasks" role="group" aria-label="Example tasks" data-a="demoTasks">
+              <button type="button" class="demo-task" data-task="search" aria-pressed="true" disabled>
+                <span class="task-dot" aria-hidden="true"></span>
+                <span class="task-ident"><strong data-t="searchName">Fix streaming</strong><small>Codex CLI</small></span>
+              </button>
+              <button type="button" class="demo-task" data-task="tests" aria-pressed="false" disabled>
+                <span class="task-dot alternate" aria-hidden="true"></span>
+                <span class="task-ident"><strong data-t="testsName">Add Kilo Gateway</strong><small>Claude Code CLI</small></span>
+              </button>
+            </div>
+          </div>
+          <div class="preview-main">
+            <header class="preview-heading"><span class="crumb" id="demo-branch">fllama/streaming</span><h2 id="demo-title">Fix streaming</h2></header>
+            <div class="view-buttons" role="group" aria-label="Task view" data-a="demoViews">
+              <button type="button" data-view="run" aria-pressed="true" data-t="runTab" disabled>Run</button>
+              <button type="button" data-view="diff" aria-pressed="false" data-t="diffTab" disabled>Changes</button>
+            </div>
+            <div class="preview-output" id="demo-run">
+              <p class="demo-prompt" id="demo-prompt">Keep Cyrillic text intact when the stream splits a character.</p>
+              <div class="demo-result"><span class="task-dot" aria-hidden="true"></span><div><strong data-t="runComplete">Run complete</strong><p id="demo-detail">The decoder preserves incomplete UTF-8 bytes between chunks.</p></div></div>
+            </div>
+            <div class="preview-output" id="demo-diff" hidden>
+              <p class="demo-file" id="demo-file">src/providers.js</p>
+              <pre><code><span id="demo-before" class="removed">- buf += chunk.toString()</span>
+<span id="demo-after" class="added">+ buf += decoder.write(chunk)</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="window-footer"><span data-t="sampleData">Sample project</span><span id="demo-agent">Codex CLI</span></div>
+      </div>
+      <figcaption data-t="caption">Interactive preview. Pick a task and open Changes to see its Git diff.</figcaption>
+    </figure>
+
+    <section class="providers wrap" id="integrations" aria-labelledby="provider-title">
+      <div class="section-intro">
+        <h2 id="provider-title" data-t="providerTitle">Agents and models</h2>
+        <p data-t="providerIntro">Choose an installed coding agent or connect a model provider. Each task keeps its own selection.</p>
+      </div>
+      <div class="integration-groups">
+        <div class="integration-group">
+          <h3 id="agents-label" data-t="cliList">Coding agents</h3>
+          <p data-t="cliSetup">Install and sign in to the CLI you want to use. OpenCode can also connect to a running server.</p>
+          <ul aria-labelledby="agents-label"><li>Codex CLI</li><li>Claude Code CLI</li><li>OpenCode</li><li>Kiro CLI</li><li>Hermes Agent</li><li>Cline CLI</li><li>Roo Code CLI</li><li>Gemini CLI</li><li>Kilo Code CLI</li></ul>
+        </div>
+        <div class="integration-group">
+          <h3 id="local-label" data-t="localTitle">Local models</h3>
+          <p data-t="localSetup">Start Ollama or the LM Studio local server. Fllama lists installed models and can download models from its Ollama catalog, including Qwen2.5 Coder.</p>
+          <ul aria-labelledby="local-label"><li>Ollama</li><li>LM Studio</li></ul>
+        </div>
+        <div class="integration-group">
+          <h3 id="providers-label" data-t="providerList">API providers</h3>
+          <p data-t="apiSetup">Configure credentials in Settings. For another OpenAI-compatible server, enter its API base URL and a model ID when needed.</p>
+          <ul aria-labelledby="providers-label"><li>OpenRouter</li><li>Gemini API</li><li>DeepSeek</li><li>Groq</li><li>xAI</li><li>Mistral</li><li>OpenAI API</li><li>Anthropic API</li><li>Kilo Gateway</li><li>OpenAI-compatible</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="workflow wrap" id="workflow" aria-labelledby="workflow-title">
+      <div class="section-intro">
+        <h2 id="workflow-title" data-t="workflowTitle">One branch per task.</h2>
+        <p data-t="workflowIntro">A Git worktree gives a task its own checkout from the current commit. Agents on separate worktrees can edit files at the same time.</p>
+      </div>
+      <div class="workflow-list">
+        <article class="workflow-row"><h3 data-t="workflow1Title">Open a project</h3><p data-t="workflow1Body">Open the repository root to use worktrees. Choose an agent and a model, then describe the task. Use a scratchpad for a conversation without project files.</p></article>
+        <article class="workflow-row"><h3 data-t="workflowStartTitle">Choose where to run</h3><p data-t="workflowStartBody">Worktree creates a new branch and checkout on the first run. Project folder works directly on the current files. Wait until the active run finishes before starting another task in the same folder.</p></article>
+        <article class="workflow-row"><h3 data-t="workflow2Title">Review the diff</h3><p data-t="workflow2Body">Use Run to follow status and activity, Files to browse the checkout, and Changes to inspect the Git diff of a selected file.</p></article>
+        <article class="workflow-row"><h3 data-t="workflow3Title">Hand off the work</h3><p data-t="workflow3Body">Start a follow-up with the previous prompt and response. A worktree handoff uses the existing branch and checkout, so a second agent can review the first agent’s changes.</p></article>
+      </div>
+    </section>
+
+    <section class="installation" id="download" aria-labelledby="download-title">
+      <div class="wrap">
+        <div class="section-intro download-intro">
+          <h2 id="download-title" data-t="getFllama">Get Fllama</h2>
+          <p data-t="downloadNotice">The linked v1.0.0 installers contain the Ollama chat. The screenshots above show the Fllama 2.0 development build.</p>
+        </div>
+        <div class="install-grid">
+          <div class="release-list">
+            <div class="release-row">
+              <div><h3>macOS</h3><small data-t="macFormat">Disk image</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0-arm64.dmg">Apple Silicon <span aria-hidden="true">↓</span></a><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0.dmg">Intel <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <div class="release-row">
+              <div><h3>Windows</h3><small>x64</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama.Setup.1.0.0.exe"><span data-t="installer">Installer</span> <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <div class="release-row">
+              <div><h3>Linux</h3><small>x64</small></div>
+              <div class="asset-links"><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama-1.0.0.AppImage">AppImage <span aria-hidden="true">↓</span></a><a href="https://github.com/ArduRadioKot/Fllama/releases/download/v1.0.0/Fllama_1.0.0_amd64.deb">.deb <span aria-hidden="true">↓</span></a></div>
+            </div>
+            <a class="text-link release-link" href="https://github.com/ArduRadioKot/Fllama/releases"><span data-t="allReleases">All releases</span><span aria-hidden="true">↗</span></a>
+          </div>
+          <div class="source-card">
+            <h3 data-t="sourceTitle">Run from source</h3>
+            <p data-t="sourceBody">Use Git and Node.js to run the version currently in the repository.</p>
+            <div class="terminal">
+              <div class="terminal-bar"><span data-t="terminal">Terminal</span><button type="button" id="copy-command" data-t="copy" hidden>Copy</button></div>
+              <pre id="install-command"><code>git clone https://github.com/ArduRadioKot/Fllama.git
+cd Fllama/src
+npm ci
+npm start</code></pre>
+            </div>
+            <p class="copy-feedback" id="copy-feedback" role="status" hidden></p>
+            <a class="text-link" href="https://github.com/ArduRadioKot/Fllama"><span data-t="browseSource">Browse the repository</span><span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <figure class="release-preview">
+          <div class="release-shots">
+            <img src="assets/ollama-chat.png" alt="Fllama 1.0.0 showing an Ollama chat response" data-alt="ollamaChatAlt" width="960" height="599" loading="lazy">
+            <img src="assets/ollama-models.png" alt="Fllama 1.0.0 showing the Ollama model catalog" data-alt="ollamaModelsAlt" width="960" height="601" loading="lazy">
+          </div>
+          <figcaption data-t="ollamaCaption">Ollama chat and model catalog in Fllama 1.0.0</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="faq wrap" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title" data-t="faqTitle">Common questions</h2>
+      <div>
+        <details name="questions"><summary data-t="faq1Question">Can I run models locally?</summary><p data-t="faq1Answer">Yes. Start Ollama or LM Studio and select an installed model. Cloud providers and hosted CLI backends can send the selected task’s context to their services.</p></details>
+        <details name="questions"><summary data-t="faq2Question">What happens to uncommitted changes?</summary><p data-t="faq2Answer">They stay in the original checkout. A new worktree starts from the committed snapshot. Choose Project folder to work with the files already in that checkout.</p></details>
+        <details name="questions"><summary data-t="faq3Question">How do I merge the branches?</summary><p data-t="faq3Answer">Inspect the diff in Fllama, then merge the branch with Git when you are satisfied with the change.</p></details>
+        <details name="questions"><summary data-t="faq4Question">What happens when I delete a task?</summary><p data-t="faq4Answer">Fllama removes the task and its conversation. Its Git worktree and branch remain on disk.</p></details>
+        <details name="questions"><summary data-t="faq5Question">Which keys do I need?</summary><p data-t="faq5Answer">Local Ollama and LM Studio servers can run without a cloud API key. CLI agents use their own sign-in. Cloud providers generally need a key, with an option to select a model marked :free for Kilo Gateway.</p></details>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <a class="brand" href="#top"><img src="assets/fllama.png" alt="" width="28" height="28">Fllama</a>
+      <div><a href="#faq" data-t="footerFaq">FAQ</a><a href="https://github.com/ArduRadioKot/Fllama">GitHub</a><a href="https://github.com/ArduRadioKot/Fllama/blob/main/LICENSE">GPL v2.0</a></div>
+    </div>
+  </footer>
+</body>
+</html>
